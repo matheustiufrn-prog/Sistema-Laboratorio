@@ -1,46 +1,49 @@
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
   password  String
-  role      String    @default("PATIENT") // ADMIN, OPERATOR, PATIENT
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  Patient   Patient?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Patient {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   fullName  String
-  cpf       String    @unique
-  birthDate DateTime
-  phone     String
+  cpf       String?  @unique
+  phone     String?
+  birthDate String?
+  gender    String?
   address   String?
-  userId    String?   @unique
-  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   orders    Order[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Exam {
-  id           String      @id @default(uuid())
-  name         String
-  category     String?     @default("Geral")
-  description  String?
-  price        Float
-  deliveryDays Int?        @default(1)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @default(now()) @updatedAt
-  orderItems   OrderItem[]
+  id          String      @id @default(uuid())
+  name        String
+  code        String?     @unique
+  price       Float
+  description String?
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Order {
@@ -48,20 +51,22 @@ model Order {
   patientId  String
   patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
   totalPrice Float
-  status     String      @default("CONCLUIDO") // "ORCAMENTO", "CONCLUIDO"
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @default(now()) @updatedAt
+  status     String      @default("PENDING")
   items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 model OrderItem {
-  id      String @id @default(uuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  examId  String
-  exam    Exam   @relation(fields: [examId], references: [id])
-  price   Float
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id])
+  price     Float
+  createdAt DateTime @default(now())
 }
+
 model Expense {
   id          String   @id @default(uuid())
   description String
@@ -69,5 +74,5 @@ model Expense {
   category    String   @default("Operacional")
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  updatedAt   DateTime @updatedAt
 }

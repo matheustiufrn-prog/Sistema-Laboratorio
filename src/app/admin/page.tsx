@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface OrderItem {
   id: string
@@ -36,6 +37,9 @@ interface Expense {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter()
+  const [authorized, setAuthorized] = useState(false)
+
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [netProfit, setNetProfit] = useState(0)
@@ -50,6 +54,21 @@ export default function AdminDashboardPage() {
   const [expAmount, setExpAmount] = useState('')
   const [expCategory, setExpCategory] = useState('Operacional')
   const [expSuccess, setExpSuccess] = useState('')
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem('user_role')
+    const storedEmail = localStorage.getItem('user_email') || ''
+
+    // Permite o acesso se for ADMIN ou se o e-mail for o do administrador principal
+    const isAdmin = storedRole === 'ADMIN' || storedEmail.toLowerCase().includes('admin')
+
+    if (!isAdmin) {
+      router.push('/admin/orders')
+    } else {
+      setAuthorized(true)
+      fetchDashboard()
+    }
+  }, [router])
 
   const fetchDashboard = async () => {
     try {
@@ -70,10 +89,6 @@ export default function AdminDashboardPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    fetchDashboard()
-  }, [])
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,6 +132,14 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error(err)
     }
+  }
+
+  if (!authorized) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-neutral-100">
+        <p className="text-sm font-semibold text-neutral-500">A verificar permissões de acesso...</p>
+      </div>
+    )
   }
 
   return (
@@ -253,7 +276,7 @@ export default function AdminDashboardPage() {
                 <div key={exp.id} className="flex justify-between items-center p-2 bg-neutral-50 rounded text-xs border">
                   <div>
                     <p className="font-bold text-black">{exp.description}</p>
-                    <p className="text-neutral-500">{exp.category} • {new Date(exp.date).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-neutral-500">{exp.category} - {new Date(exp.date).toLocaleDateString('pt-BR')}</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-red-600">R$ {Number(exp.amount).toFixed(2)}</span>
