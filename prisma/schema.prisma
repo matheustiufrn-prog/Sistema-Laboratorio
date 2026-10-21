@@ -1,0 +1,73 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  role      String    @default("PATIENT") // ADMIN, OPERATOR, PATIENT
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  Patient   Patient?
+}
+
+model Patient {
+  id        String    @id @default(uuid())
+  fullName  String
+  cpf       String    @unique
+  birthDate DateTime
+  phone     String
+  address   String?
+  userId    String?   @unique
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orders    Order[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+}
+
+model Exam {
+  id           String      @id @default(uuid())
+  name         String
+  category     String?     @default("Geral")
+  description  String?
+  price        Float
+  deliveryDays Int?        @default(1)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  orderItems   OrderItem[]
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  patientId  String
+  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  totalPrice Float
+  status     String      @default("CONCLUIDO") // "ORCAMENTO", "CONCLUIDO"
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @default(now()) @updatedAt
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  examId  String
+  exam    Exam   @relation(fields: [examId], references: [id])
+  price   Float
+}
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  category    String   @default("Operacional")
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
