@@ -113,7 +113,7 @@ export default function ExamsPage() {
 
   return (
     <div className="p-8 space-y-8 font-sans max-w-6xl mx-auto">
-      <div className="bg-black text-white p-6 rounded-2xl border-l-8 border-blue-500 shadow-md">
+      <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-blue-500 shadow-md">
         <h1 className="text-2xl font-bold">Catálogo de Exames & Preços</h1>
         <p className="text-neutral-400 text-sm mt-1">Gerencie os exames oferecidos pelo posto de coleta.</p>
       </div>

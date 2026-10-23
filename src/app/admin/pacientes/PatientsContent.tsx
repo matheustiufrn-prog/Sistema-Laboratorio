@@ -116,7 +116,7 @@ export default function PatientsContent() {
 
   return (
     <div className="p-8 space-y-8 font-sans bg-neutral-50 min-h-screen">
-      <div className="bg-black text-white p-8 rounded-2xl shadow-xl border-l-8 border-orange-500">
+      <div className="bg-green-800 text-white p-8 rounded-2xl shadow-xl border-l-8 border-green-600">
         <h1 className="text-3xl font-extrabold tracking-wide">Gestão de Pacientes</h1>
         <p className="text-neutral-400 mt-1 text-base">
           Cadastre novos pacientes, consulte o histórico, edite ou exclua registros do posto de coleta.
@@ -141,7 +141,7 @@ export default function PatientsContent() {
             <button
               type="button"
               onClick={handleResetForm}
-              className="text-xs text-orange-600 font-bold hover:underline"
+              className="text-xs text-green-700 font-bold hover:underline"
             >
               Cancelar Edição
             </button>
@@ -158,7 +158,7 @@ export default function PatientsContent() {
                 placeholder="Nome do Paciente"
                 value={fullName || ''}
                 onChange={(e) => setFullName(e.target.value)}
-                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
               />
             </div>
 
@@ -170,7 +170,7 @@ export default function PatientsContent() {
                 placeholder="000.000.000-00"
                 value={cpf || ''}
                 onChange={(e) => setCpf(e.target.value)}
-                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function PatientsContent() {
                 required
                 value={birthDate || ''}
                 onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
               />
             </div>
 
@@ -193,7 +193,7 @@ export default function PatientsContent() {
                 placeholder="(84) 90000-0000"
                 value={phone || ''}
                 onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function PatientsContent() {
               placeholder="Rua, Número, Bairro, Cidade"
               value={address || ''}
               onChange={(e) => setAddress(e.target.value)}
-              className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
             />
           </div>
 
@@ -222,7 +222,7 @@ export default function PatientsContent() {
                   placeholder="paciente@email.com"
                   value={email || ''}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
                 />
               </div>
 
@@ -234,7 +234,7 @@ export default function PatientsContent() {
                   placeholder="••••••••"
                   value={password || ''}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="mt-1 w-full p-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-green-600 focus:outline-none"
                 />
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function PatientsContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-black font-extrabold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 shadow-md shadow-orange-500/20"
+            className="w-full bg-green-600 hover:bg-green-700 text-black font-extrabold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 shadow-md shadow-green-600/20"
           >
             {loading ? 'Salvando...' : editingId ? 'Atualizar Dados do Paciente' : 'Cadastrar Paciente'}
           </button>

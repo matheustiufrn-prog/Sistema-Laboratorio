@@ -51,14 +51,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black p-4 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-green-800 p-4 font-sans">
       <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 p-8 rounded-2xl shadow-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-600 text-white font-black text-2xl mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-700 text-white font-black text-2xl mb-2">
             A
           </div>
-          <h1 className="text-2xl font-black text-white tracking-wide">AFIM LAB</h1>
-          <p className="text-xs font-bold text-orange-500 uppercase tracking-wider">Sistema de Gestão Laboratorial</p>
+          <h1 className="text-2xl font-black text-white tracking-wide">LABORATE</h1>
+          <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Sistema de Gestão Laboratorial</p>
         </div>
 
         {error && <div className="p-3 bg-red-950/80 border border-red-500 text-red-200 text-xs font-bold rounded-lg text-center">{error}</div>}
@@ -69,7 +69,7 @@ export default function LoginPage() {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white font-bold focus:outline-none focus:border-orange-500"
+              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white font-bold focus:outline-none focus:border-green-600"
             >
               <option value="ADMIN">🟢 ADMINISTRADOR (Acesso Total)</option>
               <option value="USER">🔵 OPERADOR (Apenas OS e Pacientes)</option>
@@ -84,7 +84,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@afimlab.com"
-              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white focus:outline-none focus:border-green-600"
             />
           </div>
 
@@ -96,14 +96,14 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-white focus:outline-none focus:border-green-600"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg text-sm transition duration-200 uppercase tracking-wider shadow-lg shadow-orange-600/30"
+            className="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm transition duration-200 uppercase tracking-wider shadow-lg shadow-green-700/30"
           >
             {loading ? 'Entrando...' : 'Entrar no Sistema'}
           </button>

@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="p-8 space-y-8 font-sans max-w-7xl mx-auto">
-      <div className="bg-black text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
+      <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
         <h1 className="text-2xl font-bold">Painel Financeiro & Operacional</h1>
         <p className="text-neutral-400 text-sm mt-1">Acompanhe receitas, despesas, margem líquida e o detalhe dos exames por paciente.</p>
       </div>

@@ -165,7 +165,7 @@ export default function OrdersAdminPage() {
 
   return (
     <div className="p-8 space-y-8 font-sans max-w-6xl mx-auto">
-      <div className="bg-black text-white p-6 rounded-2xl border-l-8 border-orange-500 shadow-md">
+      <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-600 shadow-md">
         <h1 className="text-2xl font-bold">Gestão de Ordens de Serviço & Orçamentos</h1>
         <p className="text-neutral-400 text-sm mt-1">Crie orçamentos, selecione exames para os pacientes e conclua as OS para alimentar o financeiro.</p>
       </div>
@@ -206,7 +206,7 @@ export default function OrdersAdminPage() {
                           type="checkbox"
                           checked={selectedExams.includes(ex.id)}
                           onChange={() => handleToggleExam(ex.id)}
-                          className="rounded text-orange-600 focus:ring-orange-500"
+                          className="rounded text-green-700 focus:ring-green-600"
                         />
                         <span className="font-medium text-black">{ex.name}</span>
                       </div>
@@ -219,7 +219,7 @@ export default function OrdersAdminPage() {
 
             <button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded text-sm transition"
+              className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-4 rounded text-sm transition"
             >
               Criar Orçamento / OS
             </button>

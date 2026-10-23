@@ -96,7 +96,7 @@ export default function UsersAdminPage() {
 
   return (
     <div className="p-8 space-y-8 font-sans max-w-5xl mx-auto">
-      <div className="bg-black text-white p-6 rounded-2xl border-l-8 border-orange-500 shadow-md">
+      <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-600 shadow-md">
         <h1 className="text-2xl font-bold">Gestão de Utilizadores e Acessos</h1>
         <p className="text-neutral-400 text-sm mt-1">Cadastre novos operadores ou administradores e gerencie os acessos ativos.</p>
       </div>
@@ -148,7 +148,7 @@ export default function UsersAdminPage() {
 
             <button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded text-sm transition"
+              className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-4 rounded text-sm transition"
             >
               Cadastrar Acesso
             </button>
