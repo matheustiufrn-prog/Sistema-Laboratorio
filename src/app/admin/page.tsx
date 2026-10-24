@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import HomeCareFinance from '@/components/HomeCareFinance'
 
 interface OrderItem {
   id: string
@@ -44,7 +45,7 @@ export default function AdminDashboardPage() {
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [netProfit, setNetProfit] = useState(0)
   const [totalOrders, setTotalOrders] = useState(0)
-  
+
   const [monthlyData, setMonthlyData] = useState<MonthlyStat[]>([])
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -59,7 +60,6 @@ export default function AdminDashboardPage() {
     const storedRole = localStorage.getItem('user_role')
     const storedEmail = localStorage.getItem('user_email') || ''
 
-    // Permite o acesso se for ADMIN ou se o e-mail for o do administrador principal
     const isAdmin = storedRole === 'ADMIN' || storedEmail.toLowerCase().includes('admin')
 
     if (!isAdmin) {
@@ -146,7 +146,7 @@ export default function AdminDashboardPage() {
     <div className="p-8 space-y-8 font-sans max-w-7xl mx-auto">
       <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
         <h1 className="text-2xl font-bold">Painel Financeiro & Operacional</h1>
-        <p className="text-neutral-400 text-sm mt-1">Acompanhe receitas, despesas, margem líquida e o detalhe dos exames por paciente.</p>
+        <p className="text-green-100 text-sm mt-1">Acompanhe receitas, despesas, margem líquida e o detalhe dos exames por paciente.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -335,6 +335,8 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </div>
+
+      <HomeCareFinance />
     </div>
   )
 }

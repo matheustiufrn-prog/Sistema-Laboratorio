@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -24,27 +24,29 @@ model User {
 }
 
 model Patient {
-  id        String   @id @default(uuid())
-  fullName  String
-  cpf       String?  @unique
-  phone     String?
-  birthDate String?
-  gender    String?
-  address   String?
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String          @id @default(uuid())
+  fullName       String
+  cpf            String?         @unique
+  phone          String?
+  birthDate      String?
+  gender         String?
+  address        String?
+  orders         Order[]
+  homeCareOrders HomeCareOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model Exam {
-  id          String      @id @default(uuid())
-  name        String
-  code        String?     @unique
-  price       Float
-  description String?
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String         @id @default(uuid())
+  name          String
+  code          String?        @unique
+  price         Float
+  description   String?
+  orderItems    OrderItem[]
+  homeCareItems HomeCareItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Order {
@@ -76,4 +78,43 @@ model Expense {
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model HomeCareOrder {
+  id             String                  @id @default(uuid())
+  patientId      String
+  patient        Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  neighborhood   String
+  city           String
+  collectionLab  String
+  collectionFee  Float                   @default(0)
+  travelFee      Float                   @default(0)
+  examsTotal     Float                   @default(0)
+  totalPrice     Float                   @default(0)
+  status         String                  @default("ORCAMENTO")
+  items          HomeCareItem[]
+  reimbursements HomeCareReimbursement[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model HomeCareItem {
+  id              String        @id @default(uuid())
+  homeCareOrderId String
+  homeCareOrder   HomeCareOrder @relation(fields: [homeCareOrderId], references: [id], onDelete: Cascade)
+  examId          String
+  exam            Exam          @relation(fields: [examId], references: [id])
+  price           Float
+  createdAt       DateTime      @default(now())
+}
+
+model HomeCareReimbursement {
+  id              String        @id @default(uuid())
+  homeCareOrderId String
+  homeCareOrder   HomeCareOrder @relation(fields: [homeCareOrderId], references: [id], onDelete: Cascade)
+  description     String
+  amount          Float
+  status          String        @default("PENDENTE")
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
 }

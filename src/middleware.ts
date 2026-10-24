@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifySessionToken, SESSION_COOKIE } from '@/lib/auth'
 
 const PUBLIC_PATHS = ['/admin/login', '/api/auth/login', '/api/logout']
-const ADMIN_ONLY_API = ['/api/users', '/api/dashboard', '/api/expenses']
+const ADMIN_ONLY_API = ['/api/users', '/api/dashboard', '/api/expenses', '/api/homecare']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -32,7 +32,10 @@ export async function middleware(req: NextRequest) {
     }
 
     const adminOnlyPage =
-      pathname === '/' || pathname === '/admin' || pathname.startsWith('/admin/usuarios')
+      pathname === '/' ||
+      pathname === '/admin' ||
+      pathname.startsWith('/admin/usuarios') ||
+      pathname.startsWith('/admin/homecare')
 
     if (adminOnlyPage) {
       const url = req.nextUrl.clone()
