@@ -1,75 +1,100 @@
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { getSession } from '@/lib/session'
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+type Ctx = { params: Promise<{ id: string }> }
+
+// Define ou redefine a senha de acesso do paciente ao portal
+export async function PATCH(request: Request, { params }: Ctx) {
   try {
     const { id } = await params
     const body = await request.json()
-    
-    const fullName = body.fullName || body.name
-    const { cpf, birthDate, phone, address } = body
+    const password = String(body.password || '')
 
-    const updatedPatient = await prisma.patient.update({
-      where: { id: id.trim() },
-      data: { 
-        ...(fullName && { fullName }),
-        ...(cpf && { cpf }),
-        ...(birthDate && { birthDate: new Date(birthDate).toISOString() }),
-        ...(phone && { phone }),
-        ...(address !== undefined && { address })
-      }
-    })
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'A senha precisa ter pelo menos 6 caracteres.' },
+        { status: 400 }
+      )
+    }
 
-    return NextResponse.json({ message: 'Paciente atualizado com sucesso!', patient: updatedPatient }, { status: 200 })
-  } catch (error) {
-    console.error('Erro ao atualizar paciente:', error)
-    return NextResponse.json({ error: 'Erro ao atualizar paciente.' }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const resolvedParams = await params
-    const id = resolvedParams.id?.trim()
-
-    // 1. Busca o paciente para pegar o userId vinculado e verificar ordens
     const patient = await prisma.patient.findUnique({
       where: { id },
-      select: { userId: true }
+      include: { user: true },
     })
 
     if (!patient) {
       return NextResponse.json({ error: 'Paciente não encontrado.' }, { status: 404 })
     }
 
-    // 2. Apaga primeiro as ordens de serviço do paciente (se existirem)
-    await prisma.order.deleteMany({
-      where: { patientId: id }
-    })
+    const hash = await bcrypt.hash(password, 10)
 
-    // 3. Apaga o registro do paciente
-    await prisma.patient.delete({
-      where: { id }
-    })
-
-    // 4. Se houver um usuário de acesso (Portal) associado, apaga também
-    if (patient.userId) {
-      await prisma.user.delete({
-        where: { id: patient.userId }
-      }).catch(() => {
-        // Ignora se o usuário já tiver sido removido
-      })
+    if (patient.user) {
+      await prisma.user.update({ where: { id: patient.user.id }, data: { password: hash } })
+      return NextResponse.json({ success: true })
     }
 
-    return NextResponse.json({ message: 'Paciente excluído com sucesso!' }, { status: 200 })
-  } catch (error: any) {
-    console.error('Erro ao excluir paciente:', error)
-    return NextResponse.json({ error: error?.message || 'Erro ao excluir paciente.' }, { status: 500 })
+    const email = String(body.email || '').trim().toLowerCase()
+
+    if (!email || !EMAIL_RE.test(email)) {
+      return NextResponse.json(
+        { error: 'Informe um e-mail válido para criar o acesso.' },
+        { status: 400 }
+      )
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+      return NextResponse.json({ error: 'Já existe uma conta com este e-mail.' }, { status: 400 })
+    }
+
+    await prisma.user.create({
+      data: {
+        name: patient.fullName,
+        email,
+        password: hash,
+        role: 'PATIENT',
+        patient: { connect: { id: patient.id } },
+      },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('ERRO AO ATUALIZAR ACESSO DO PACIENTE:', error)
+    return NextResponse.json({ error: 'Erro ao atualizar o acesso do paciente.' }, { status: 500 })
+  }
+}
+
+export async function DELETE(_request: Request, { params }: Ctx) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Somente o administrador pode excluir pacientes.' }, { status: 403 })
+    }
+
+    const { id } = await params
+
+    const patient = await prisma.patient.findUnique({
+      where: { id },
+      select: { id: true, userId: true },
+    })
+
+    if (!patient) {
+      return NextResponse.json({ error: 'Paciente não encontrado.' }, { status: 404 })
+    }
+
+    await prisma.patient.delete({ where: { id } })
+
+    if (patient.userId) {
+      await prisma.user.delete({ where: { id: patient.userId } })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('ERRO AO EXCLUIR PACIENTE:', error)
+    return NextResponse.json({ error: 'Erro ao excluir o paciente.' }, { status: 500 })
   }
 }

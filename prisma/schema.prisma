@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   ADMIN
   USER
+  PATIENT
 }
 
 model User {
@@ -19,6 +20,7 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(USER)
+  patient   Patient?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -31,8 +33,11 @@ model Patient {
   birthDate      String?
   gender         String?
   address        String?
+  userId         String?         @unique
+  user           User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   orders         Order[]
   homeCareOrders HomeCareOrder[]
+  results        LabResult[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
@@ -41,7 +46,9 @@ model Exam {
   id            String         @id @default(uuid())
   name          String
   code          String?        @unique
+  category      String?
   price         Float
+  deliveryDays  Int            @default(1)
   description   String?
   orderItems    OrderItem[]
   homeCareItems HomeCareItem[]
@@ -117,4 +124,16 @@ model HomeCareReimbursement {
   status          String        @default("PENDENTE")
   paidAt          DateTime?
   createdAt       DateTime      @default(now())
+}
+
+model LabResult {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title     String
+  notes     String?
+  fileName  String
+  fileSize  Int
+  data      Bytes
+  createdAt DateTime @default(now())
 }

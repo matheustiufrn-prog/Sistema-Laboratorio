@@ -387,7 +387,7 @@ export default function HomeCarePage() {
                         Coleta feita por: <span className="font-semibold">{order.collectionLab}</span>
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`px-2.5 py-1 rounded-md text-xs font-bold border ${
                           done
@@ -397,6 +397,16 @@ export default function HomeCarePage() {
                       >
                         {done ? 'Concluído' : 'Pendente / Orçamento'}
                       </span>
+
+                      <a
+                        href={`/orcamento/homecare/${order.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-3 py-1 rounded text-xs transition"
+                      >
+                        🖨️ Orçamento
+                      </a>
+
                       {!done && (
                         <button
                           type="button"

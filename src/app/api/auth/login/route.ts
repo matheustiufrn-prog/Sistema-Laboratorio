@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { SignJWT } from 'jose'
-import { cookies } from 'next/headers'
-import { SESSION_COOKIE } from '@/lib/auth'
-
-const secretKey = process.env.AUTH_SECRET
-const encodedKey = new TextEncoder().encode(secretKey)
+import { createSessionToken, SESSION_COOKIE } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios.' }, { status: 400 })
@@ -18,38 +13,41 @@ export async function POST(request: Request) {
 
     const cleanEmail = String(email).toLowerCase().trim()
 
-    // 1. Busca o usuário no banco de dados
-    const user = await prisma.user.findFirst({
-      where: { email: cleanEmail }
-    })
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } })
 
-    if (!user) {
+    const passwordOk = user ? await bcrypt.compare(String(password), user.password) : false
+
+    if (!user || !passwordOk) {
       return NextResponse.json({ error: 'E-mail ou senha inválidos.' }, { status: 401 })
     }
 
-    // 2. Gera o token de sessão usando o jose e o AUTH_SECRET
-    const token = await new SignJWT({ 
-      userId: user.id, 
-      email: user.email, 
-      role: user.role || 'ADMIN' 
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('24h')
-      .sign(encodedKey)
+    if (user.role === 'PATIENT') {
+      return NextResponse.json(
+        { error: 'Esta é a entrada da equipe. Pacientes devem acessar o portal em /paciente/login.' },
+        { status: 403 }
+      )
+    }
 
-    // 3. Salva o token usando a constante SESSION_COOKIE que o middleware lê
-    const cookieStore = await cookies()
-    cookieStore.set(SESSION_COOKIE, token, {
+    const token = await createSessionToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    })
+
+    const response = NextResponse.json({
+      success: true,
+      user: { id: user.id, email: user.email, role: user.role },
+    })
+
+    response.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 // 24 horas
+      maxAge: 60 * 60 * 8,
     })
 
-    return NextResponse.json({ success: true, user }, { status: 200 })
-    
+    return response
   } catch (error) {
     console.error('ERRO NO LOGIN:', error)
     return NextResponse.json({ error: 'Erro ao realizar login.' }, { status: 500 })

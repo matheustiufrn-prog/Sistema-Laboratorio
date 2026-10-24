@@ -28,6 +28,8 @@ const SECTIONS: NavSection[] = [
       { href: '/admin/pacientes', label: 'Pacientes', icon: '🧑‍⚕️' },
       { href: '/admin/exames', label: 'Catálogo de Exames', icon: '🔬' },
       { href: '/admin/orders', label: 'Ordens de Serviço', icon: '📋' },
+      { href: '/admin/orcamentos', label: 'Orçamentos', icon: '🧾' },
+      { href: '/admin/resultados', label: 'Resultados', icon: '📄' },
       { href: '/admin/homecare', label: 'Home Care', icon: '🏠', adminOnly: true },
     ],
   },

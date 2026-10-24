@@ -167,7 +167,7 @@ export default function OrdersAdminPage() {
     <div className="p-8 space-y-8 font-sans max-w-6xl mx-auto">
       <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-600 shadow-md">
         <h1 className="text-2xl font-bold">Gestão de Ordens de Serviço & Orçamentos</h1>
-        <p className="text-neutral-400 text-sm mt-1">Crie orçamentos, selecione exames para os pacientes e conclua as OS para alimentar o financeiro.</p>
+        <p className="text-green-100 text-sm mt-1">Crie orçamentos, selecione exames para os pacientes e conclua as OS para alimentar o financeiro.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -262,6 +262,15 @@ export default function OrdersAdminPage() {
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <a
+                              href={`/orcamento/os/${order.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-3 py-1 rounded text-xs transition"
+                            >
+                              🖨️ Orçamento
+                            </a>
+
                             {!isCompleted ? (
                               <button
                                 type="button"
