@@ -11,18 +11,20 @@ datasource db {
 enum Role {
   ADMIN
   USER
+  DOCTOR
   PATIENT
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String?
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  patient   Patient?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String        @id @default(uuid())
+  name         String?
+  email        String        @unique
+  password     String
+  role         Role          @default(USER)
+  patient      Patient?
+  professional Professional?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Patient {
@@ -38,8 +40,40 @@ model Patient {
   orders         Order[]
   homeCareOrders HomeCareOrder[]
   results        LabResult[]
+  professionals  Professional[]  @relation("ProfessionalPatients")
+  medicalRecords MedicalRecord[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+}
+
+model Professional {
+  id                String          @id @default(uuid())
+  name              String
+  specialty         String
+  registration      String?
+  phone             String?
+  consultationPrice Float           @default(0)
+  active            Boolean         @default(true)
+  userId            String?         @unique
+  user              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  patients          Patient[]       @relation("ProfessionalPatients")
+  orders            Order[]
+  medicalRecords    MedicalRecord[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model MedicalRecord {
+  id             String       @id @default(uuid())
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  complaint      String?
+  evaluation     String?
+  diagnosis      String?
+  plan           String?
+  createdAt      DateTime     @default(now())
 }
 
 model Exam {
@@ -57,14 +91,17 @@ model Exam {
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  patientId  String
-  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  totalPrice Float
-  status     String      @default("PENDING")
-  items      OrderItem[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id              String        @id @default(uuid())
+  patientId       String
+  patient         Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professionalId  String?
+  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  consultationFee Float         @default(0)
+  totalPrice      Float
+  status          String        @default("PENDING")
+  items           OrderItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model OrderItem {

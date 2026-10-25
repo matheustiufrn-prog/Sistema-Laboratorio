@@ -9,7 +9,22 @@ const PUBLIC_PATHS = [
   '/api/paciente/login',
 ]
 
-const ADMIN_ONLY_API = ['/api/users', '/api/dashboard', '/api/expenses', '/api/homecare']
+const ADMIN_ONLY_API = [
+  '/api/users',
+  '/api/dashboard',
+  '/api/expenses',
+  '/api/homecare',
+  '/api/reports',
+  '/api/medical-records',
+]
+
+const ADMIN_ONLY_PAGES = [
+  '/admin/usuarios',
+  '/admin/homecare',
+  '/admin/relatorios',
+  '/admin/consultas',
+  '/orcamento/homecare',
+]
 
 function isPortalPath(p: string) {
   return (
@@ -19,6 +34,15 @@ function isPortalPath(p: string) {
     p.startsWith('/api/paciente/')
   )
 }
+
+function redirectTo(req: NextRequest, path: string) {
+  const url = req.nextUrl.clone()
+  url.pathname = path
+  url.search = ''
+  return NextResponse.redirect(url)
+}
+
+const deny = () => NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -35,56 +59,43 @@ export async function middleware(req: NextRequest) {
     if (isApi) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
-    const url = req.nextUrl.clone()
-    url.pathname = portal ? '/paciente/login' : '/admin/login'
-    url.search = ''
-    return NextResponse.redirect(url)
+    return redirectTo(req, portal ? '/paciente/login' : '/admin/login')
   }
 
   // Paciente: só enxerga o portal dele
   if (session.role === 'PATIENT') {
-    if (portal) {
-      return NextResponse.next()
-    }
+    if (portal) return NextResponse.next()
+    return isApi ? deny() : redirectTo(req, '/paciente')
+  }
+
+  // Médico: só a aba de consultas e a API de prontuários
+  if (session.role === 'DOCTOR') {
     if (isApi) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+      return pathname.startsWith('/api/medical-records') ? NextResponse.next() : deny()
     }
-    const url = req.nextUrl.clone()
-    url.pathname = '/paciente'
-    url.search = ''
-    return NextResponse.redirect(url)
+    if (pathname.startsWith('/admin/consultas')) return NextResponse.next()
+    return redirectTo(req, '/admin/consultas')
   }
 
   const isAdmin = session.role === 'ADMIN'
 
   // Equipe: não usa o portal do paciente
   if (portal) {
-    if (isApi) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-    const url = req.nextUrl.clone()
-    url.pathname = isAdmin ? '/admin' : '/admin/pacientes'
-    url.search = ''
-    return NextResponse.redirect(url)
+    return isApi ? deny() : redirectTo(req, isAdmin ? '/admin' : '/admin/pacientes')
   }
 
   if (!isAdmin) {
     if (ADMIN_ONLY_API.some((p) => pathname.startsWith(p))) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+      return deny()
     }
 
     const adminOnlyPage =
       pathname === '/' ||
       pathname === '/admin' ||
-      pathname.startsWith('/admin/usuarios') ||
-      pathname.startsWith('/admin/homecare') ||
-      pathname.startsWith('/orcamento/homecare')
+      ADMIN_ONLY_PAGES.some((p) => pathname.startsWith(p))
 
     if (adminOnlyPage) {
-      const url = req.nextUrl.clone()
-      url.pathname = '/admin/pacientes'
-      url.search = ''
-      return NextResponse.redirect(url)
+      return redirectTo(req, '/admin/pacientes')
     }
   }
 

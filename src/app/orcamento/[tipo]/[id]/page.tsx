@@ -46,6 +46,18 @@ export default function QuotePage() {
         }))
 
         if (tipo === 'os') {
+          const fee = Number(order.consultationFee) || 0
+
+          if (order.professional || fee > 0) {
+            const who = order.professional
+              ? `${order.professional.name}${order.professional.specialty ? ` (${order.professional.specialty})` : ''}`
+              : ''
+            lines.push({
+              name: `Consulta médica${who ? ` – ${who}` : ''}`,
+              price: fee,
+            })
+          }
+
           setData({
             kind: 'os',
             id: order.id,

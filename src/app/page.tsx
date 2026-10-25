@@ -1,30 +1,42 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import HomeCareFinance from '@/components/HomeCareFinance'
 
-interface OrderItem {
-  id: string
-  exam?: {
-    name: string
-  }
+interface Summary {
+  services: number
+  consultations: number
+  examsRevenue: number
+  consultationsRevenue: number
+  homeCareRevenue: number
+  revenueTotal: number
+  expensesTotal: number
+  reimbursementsTotal: number
+  result: number
+  averageTicket: number
+  labOrders: number
+  homeCareOrders: number
 }
 
-interface Order {
-  id: string
-  totalPrice: number
-  createdAt: string
-  patient?: {
-    fullName: string
-    cpf: string
-  }
-  items: OrderItem[]
+interface MonthlyRow {
+  key: string
+  label: string
+  services: number
+  examsRevenue: number
+  consultationsRevenue: number
+  homeCareRevenue: number
+  expensesTotal: number
+  result: number
 }
 
-interface MonthlyStat {
-  month: string
-  revenue: number
-  expenses: number
-  ordersCount: number
+interface RecentItem {
+  id: string
+  kind: 'LAB' | 'HOMECARE'
+  date: string
+  patient: string
+  description: string
+  total: number
 }
 
 interface Expense {
@@ -35,18 +47,19 @@ interface Expense {
   date: string
 }
 
+const brl = (v: number) =>
+  Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
 export default function AdminDashboardPage() {
-  const [totalRevenue, setTotalRevenue] = useState(0)
-  const [totalExpenses, setTotalExpenses] = useState(0)
-  const [netProfit, setNetProfit] = useState(0)
-  const [totalOrders, setTotalOrders] = useState(0)
-  
-  const [monthlyData, setMonthlyData] = useState<MonthlyStat[]>([])
-  const [recentOrders, setRecentOrders] = useState<Order[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const router = useRouter()
+  const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Formulário de Despesa
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [monthly, setMonthly] = useState<MonthlyRow[]>([])
+  const [recent, setRecent] = useState<RecentItem[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+
   const [expDescription, setExpDescription] = useState('')
   const [expAmount, setExpAmount] = useState('')
   const [expCategory, setExpCategory] = useState('Operacional')
@@ -57,12 +70,9 @@ export default function AdminDashboardPage() {
       const res = await fetch('/api/dashboard')
       if (res.ok) {
         const data = await res.json()
-        setTotalRevenue(data.totalRevenue || 0)
-        setTotalExpenses(data.totalExpenses || 0)
-        setNetProfit(data.netProfit || 0)
-        setTotalOrders(data.totalOrders || 0)
-        setMonthlyData(data.monthlyData || [])
-        setRecentOrders(data.recentOrders || [])
+        setSummary(data.summary)
+        setMonthly(data.monthly || [])
+        setRecent(data.recent || [])
         setExpenses(data.expenses || [])
       }
     } catch (err) {
@@ -73,8 +83,13 @@ export default function AdminDashboardPage() {
   }
 
   useEffect(() => {
-    fetchDashboard()
-  }, [])
+    if (localStorage.getItem('user_role') !== 'ADMIN') {
+      router.push('/admin/pacientes')
+    } else {
+      setAuthorized(true)
+      fetchDashboard()
+    }
+  }, [router])
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,11 +99,7 @@ export default function AdminDashboardPage() {
       const res = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          description: expDescription,
-          amount: expAmount,
-          category: expCategory
-        })
+        body: JSON.stringify({ description: expDescription, amount: expAmount, category: expCategory }),
       })
 
       if (res.ok) {
@@ -106,118 +117,151 @@ export default function AdminDashboardPage() {
     if (!confirm('Deseja realmente excluir esta despesa?')) return
 
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
-        method: 'DELETE'
-      })
-
-      if (res.ok) {
-        fetchDashboard()
-      } else {
-        alert('Erro ao excluir despesa.')
-      }
+      const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' })
+      if (res.ok) fetchDashboard()
+      else alert('Erro ao excluir despesa.')
     } catch (err) {
       console.error(err)
     }
   }
 
+  if (!authorized) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-neutral-100">
+        <p className="text-sm font-semibold text-neutral-500">A verificar permissões de acesso...</p>
+      </div>
+    )
+  }
+
+  const s = summary
+  const value = (n: number | undefined) => (loading || n === undefined ? '...' : brl(n))
+
+  const cards = [
+    { label: 'Faturamento bruto', value: value(s?.revenueTotal), color: 'text-green-700' },
+    { label: 'Despesas totais', value: value(s?.expensesTotal), color: 'text-red-600' },
+    {
+      label: 'Resultado líquido',
+      value: value(s?.result),
+      color: (s?.result ?? 0) >= 0 ? 'text-green-800' : 'text-red-700',
+    },
+    { label: 'Ticket médio', value: value(s?.averageTicket), color: 'text-neutral-800' },
+  ]
+
+  const streams = [
+    { label: '🔬 Exames (laboratório)', value: s?.examsRevenue, note: `${s?.labOrders ?? 0} OS concluídas` },
+    {
+      label: '🩺 Consultas médicas',
+      value: s?.consultationsRevenue,
+      note: `${s?.consultations ?? 0} consulta(s)`,
+    },
+    { label: '🏠 Home Care', value: s?.homeCareRevenue, note: `${s?.homeCareOrders ?? 0} OS concluídas` },
+  ]
+
+  const inputClass = 'w-full rounded border border-neutral-300 p-2 text-sm text-black'
+
   return (
-    <div className="p-8 space-y-8 font-sans max-w-7xl mx-auto">
-      {/* Cabeçalho */}
-      <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
-        <h1 className="text-2xl font-bold">Painel Financeiro & Operacional</h1>
-        <p className="text-neutral-400 text-sm mt-1">Acompanhe receitas, despesas, margem líquida e o detalhe dos exames por paciente.</p>
+    <div className="mx-auto max-w-7xl space-y-8 p-8 font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border-l-8 border-green-500 bg-green-800 p-6 text-white shadow-md">
+        <div>
+          <h1 className="text-2xl font-bold">Painel Financeiro & Operacional</h1>
+          <p className="mt-1 text-sm text-green-100">
+            Visão consolidada de exames, consultas e Home Care, com despesas e resultado.
+          </p>
+        </div>
+        <a
+          href="/admin/relatorios"
+          className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-800 shadow-sm transition hover:bg-green-50"
+        >
+          🗓️ Relatório mensal
+        </a>
       </div>
 
-      {/* Cards Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm">
-          <p className="text-xs font-bold text-neutral-500 uppercase">Faturamento Bruto</p>
-          <p className="text-2xl font-extrabold text-green-700 mt-1">
-            {loading ? '...' : `R$ ${totalRevenue.toFixed(2)}`}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase text-neutral-500">{c.label}</p>
+            <p className={`mt-1 text-2xl font-extrabold ${c.color}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
 
-        <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm">
-          <p className="text-xs font-bold text-neutral-500 uppercase">Despesas Totais</p>
-          <p className="text-2xl font-extrabold text-red-600 mt-1">
-            {loading ? '...' : `R$ ${totalExpenses.toFixed(2)}`}
-          </p>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm">
-          <p className="text-xs font-bold text-neutral-500 uppercase">Lucro Líquido</p>
-          <p className={`text-2xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-blue-600' : 'text-red-700'}`}>
-            {loading ? '...' : `R$ ${netProfit.toFixed(2)}`}
-          </p>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm">
-          <p className="text-xs font-bold text-neutral-500 uppercase">Atendimentos Concluídos</p>
-          <p className="text-2xl font-extrabold text-neutral-800 mt-1">
-            {loading ? '...' : totalOrders}
-          </p>
+      <div className="space-y-3">
+        <h2 className="text-lg font-bold text-neutral-800">Receita por origem</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {streams.map((x) => (
+            <div key={x.label} className="rounded-xl border border-green-200 bg-green-50 p-5">
+              <p className="text-sm font-bold text-green-900">{x.label}</p>
+              <p className="mt-1 text-2xl font-extrabold text-green-700">{value(x.value)}</p>
+              <p className="mt-1 text-xs text-green-800">{x.note}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Tabela de Desempenho Mês a Mês */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-          <h2 className="text-lg font-bold text-neutral-800">📅 Desempenho Mês a Mês</h2>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <h2 className="text-lg font-bold text-neutral-800">📅 Desempenho mês a mês</h2>
+
           {loading ? (
-            <p className="text-neutral-500 text-sm">Carregando...</p>
-          ) : monthlyData.length === 0 ? (
-            <p className="text-neutral-500 text-sm">Nenhum dado mensal registrado ainda.</p>
+            <p className="text-sm text-neutral-500">Carregando...</p>
+          ) : monthly.length === 0 ? (
+            <p className="text-sm text-neutral-500">Nenhum dado mensal registrado ainda.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
+              <table className="w-full border-collapse text-left text-sm">
                 <thead>
-                  <tr className="bg-neutral-100 border-b text-neutral-600">
-                    <th className="p-3">Mês/Ano</th>
-                    <th className="p-3">Atendimentos</th>
-                    <th className="p-3">Faturamento</th>
+                  <tr className="border-b bg-neutral-100 text-neutral-600">
+                    <th className="p-3">Mês</th>
+                    <th className="p-3">OS</th>
+                    <th className="p-3">Exames</th>
+                    <th className="p-3">Consultas</th>
+                    <th className="p-3">Home Care</th>
                     <th className="p-3">Despesas</th>
                     <th className="p-3 text-right">Resultado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {monthlyData.map((m, idx) => {
-                    const balance = m.revenue - m.expenses
-                    return (
-                      <tr key={idx} className="border-b hover:bg-neutral-50">
-                        <td className="p-3 font-semibold capitalize text-black">{m.month}</td>
-                        <td className="p-3 font-medium text-neutral-700">{m.ordersCount} OS</td>
-                        <td className="p-3 font-bold text-green-700">R$ {m.revenue.toFixed(2)}</td>
-                        <td className="p-3 font-bold text-red-600">R$ {m.expenses.toFixed(2)}</td>
-                        <td className={`p-3 text-right font-extrabold ${balance >= 0 ? 'text-blue-600' : 'text-red-700'}`}>
-                          R$ {balance.toFixed(2)}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {monthly.map((m) => (
+                    <tr key={m.key} className="border-b hover:bg-neutral-50">
+                      <td className="p-3 font-semibold text-black">{m.label}</td>
+                      <td className="p-3 text-neutral-700">{m.services}</td>
+                      <td className="p-3 font-semibold text-green-700">{brl(m.examsRevenue)}</td>
+                      <td className="p-3 font-semibold text-green-700">{brl(m.consultationsRevenue)}</td>
+                      <td className="p-3 font-semibold text-green-700">{brl(m.homeCareRevenue)}</td>
+                      <td className="p-3 font-semibold text-red-600">{brl(m.expensesTotal)}</td>
+                      <td
+                        className={`p-3 text-right font-extrabold ${
+                          m.result >= 0 ? 'text-green-800' : 'text-red-700'
+                        }`}
+                      >
+                        {brl(m.result)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
 
-        {/* Cadastrar e Listar Despesas */}
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-          <h2 className="text-lg font-bold text-neutral-800">💸 Registrar Nova Despesa</h2>
-          {expSuccess && <p className="text-xs font-bold text-green-700 bg-green-100 p-2 rounded">{expSuccess}</p>}
+        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-800">💸 Registrar nova despesa</h2>
+          {expSuccess && <p className="rounded bg-green-100 p-2 text-xs font-bold text-green-700">{expSuccess}</p>}
+
           <form onSubmit={handleAddExpense} className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 mb-1">Descrição</label>
+              <label className="mb-1 block text-xs font-semibold text-neutral-600">Descrição</label>
               <input
                 type="text"
                 required
                 value={expDescription}
                 onChange={(e) => setExpDescription(e.target.value)}
                 placeholder="Ex: Reagentes, Aluguel, Energia"
-                className="w-full p-2 border border-neutral-300 rounded text-sm text-black"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 mb-1">Valor (R$)</label>
+              <label className="mb-1 block text-xs font-semibold text-neutral-600">Valor (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -225,15 +269,15 @@ export default function AdminDashboardPage() {
                 value={expAmount}
                 onChange={(e) => setExpAmount(e.target.value)}
                 placeholder="150.00"
-                className="w-full p-2 border border-neutral-300 rounded text-sm text-black"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-neutral-600 mb-1">Categoria</label>
+              <label className="mb-1 block text-xs font-semibold text-neutral-600">Categoria</label>
               <select
                 value={expCategory}
                 onChange={(e) => setExpCategory(e.target.value)}
-                className="w-full p-2 border border-neutral-300 rounded text-sm bg-white text-black"
+                className={`${inputClass} bg-white`}
               >
                 <option value="Operacional">Operacional</option>
                 <option value="Insumos/Reagentes">Insumos/Reagentes</option>
@@ -243,30 +287,34 @@ export default function AdminDashboardPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm transition"
+              className="w-full rounded bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700"
             >
-              Salvar Despesa
+              Salvar despesa
             </button>
           </form>
 
-          {/* Lista de Despesas Lançadas com botão de Excluir */}
-          <div className="border-t pt-4 space-y-2 max-h-56 overflow-y-auto">
-            <h3 className="text-xs font-bold text-neutral-500 uppercase">Despesas Lançadas</h3>
+          <div className="max-h-56 space-y-2 overflow-y-auto border-t pt-4">
+            <h3 className="text-xs font-bold uppercase text-neutral-500">Despesas lançadas</h3>
             {expenses.length === 0 ? (
               <p className="text-xs text-neutral-400">Nenhuma despesa lançada.</p>
             ) : (
               expenses.map((exp) => (
-                <div key={exp.id} className="flex justify-between items-center p-2 bg-neutral-50 rounded text-xs border">
+                <div
+                  key={exp.id}
+                  className="flex items-center justify-between rounded border bg-neutral-50 p-2 text-xs"
+                >
                   <div>
                     <p className="font-bold text-black">{exp.description}</p>
-                    <p className="text-neutral-500">{exp.category} • {new Date(exp.date).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-neutral-500">
+                      {exp.category} - {new Date(exp.date).toLocaleDateString('pt-BR')}
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-red-600">R$ {Number(exp.amount).toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-red-600">{brl(exp.amount)}</span>
                     <button
                       type="button"
                       onClick={() => handleDeleteExpense(exp.id)}
-                      className="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2 py-1 rounded"
+                      className="rounded bg-red-100 px-2 py-1 font-bold text-red-700 hover:bg-red-200"
                     >
                       ✕
                     </button>
@@ -278,47 +326,48 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Detalhamento de Pacientes e Exames Realizados */}
-      <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-neutral-800">🔬 Detalhamento: Pacientes x Exames Realizados</h2>
+      <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-800">🧾 Últimos atendimentos concluídos</h2>
+
         {loading ? (
-          <p className="text-neutral-500 text-sm">Carregando detalhes...</p>
-        ) : recentOrders.length === 0 ? (
-          <p className="text-neutral-500 text-sm">Nenhum atendimento concluído até o momento.</p>
+          <p className="text-sm text-neutral-500">Carregando detalhes...</p>
+        ) : recent.length === 0 ? (
+          <p className="text-sm text-neutral-500">Nenhum atendimento concluído até o momento.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="bg-neutral-100 border-b text-neutral-600">
+                <tr className="border-b bg-neutral-100 text-neutral-600">
                   <th className="p-3">Data</th>
+                  <th className="p-3">Tipo</th>
                   <th className="p-3">Paciente</th>
-                  <th className="p-3">CPF</th>
-                  <th className="p-3">Exames Realizados</th>
-                  <th className="p-3 text-right">Valor Total</th>
+                  <th className="p-3">Itens</th>
+                  <th className="p-3 text-right">Valor</th>
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => {
-                  const examList = order.items.map(item => item.exam?.name).filter(Boolean).join(', ')
-                  return (
-                    <tr key={order.id} className="border-b hover:bg-neutral-50">
-                      <td className="p-3 text-neutral-600">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                      <td className="p-3 font-semibold text-black">{order.patient?.fullName || 'Paciente'}</td>
-                      <td className="p-3 text-neutral-600">{order.patient?.cpf || '-'}</td>
-                      <td className="p-3">
-                        <span className="bg-blue-50 text-blue-800 px-2.5 py-1 rounded-md text-xs font-semibold border border-blue-200">
-                          {examList || 'Exames não especificados'}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right font-bold text-green-700">R$ {Number(order.totalPrice).toFixed(2)}</td>
-                    </tr>
-                  )
-                })}
+                {recent.map((r) => (
+                  <tr key={`${r.kind}-${r.id}`} className="border-b hover:bg-neutral-50">
+                    <td className="p-3 text-neutral-600">{new Date(r.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="p-3">
+                      <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
+                        {r.kind === 'HOMECARE' ? '🏠 Home Care' : 'Laboratório'}
+                      </span>
+                    </td>
+                    <td className="p-3 font-semibold text-black">{r.patient}</td>
+                    <td className="max-w-xs truncate p-3 text-xs text-neutral-600" title={r.description}>
+                      {r.description}
+                    </td>
+                    <td className="p-3 text-right font-bold text-green-700">{brl(r.total)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      <HomeCareFinance />
     </div>
   )
 }

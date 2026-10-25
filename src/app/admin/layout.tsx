@@ -9,7 +9,7 @@ type NavItem = {
   href: string
   label: string
   icon: string
-  adminOnly?: boolean
+  roles: string[]
 }
 
 type NavSection = {
@@ -20,24 +20,34 @@ type NavSection = {
 const SECTIONS: NavSection[] = [
   {
     title: 'Principal',
-    items: [{ href: '/admin', label: 'Dashboard Financeiro', icon: '📊', adminOnly: true }],
+    items: [
+      { href: '/admin', label: 'Dashboard Financeiro', icon: '📊', roles: ['ADMIN'] },
+      { href: '/admin/relatorios', label: 'Relatório Mensal', icon: '🗓️', roles: ['ADMIN'] },
+    ],
   },
   {
     title: 'Operação',
     items: [
-      { href: '/admin/pacientes', label: 'Pacientes', icon: '🧑‍⚕️' },
-      { href: '/admin/exames', label: 'Catálogo de Exames', icon: '🔬' },
-      { href: '/admin/orders', label: 'Ordens de Serviço', icon: '📋' },
-      { href: '/admin/orcamentos', label: 'Orçamentos', icon: '🧾' },
-      { href: '/admin/resultados', label: 'Resultados', icon: '📄' },
-      { href: '/admin/homecare', label: 'Home Care', icon: '🏠', adminOnly: true },
+      { href: '/admin/pacientes', label: 'Pacientes', icon: '🧑‍⚕️', roles: ['ADMIN', 'USER'] },
+      { href: '/admin/exames', label: 'Catálogo de Exames', icon: '🔬', roles: ['ADMIN', 'USER'] },
+      { href: '/admin/orders', label: 'Ordens de Serviço', icon: '📋', roles: ['ADMIN', 'USER'] },
+      { href: '/admin/orcamentos', label: 'Orçamentos', icon: '🧾', roles: ['ADMIN', 'USER'] },
+      { href: '/admin/resultados', label: 'Resultados', icon: '📄', roles: ['ADMIN', 'USER'] },
+      { href: '/admin/consultas', label: 'Consultas Médicas', icon: '🩺', roles: ['ADMIN', 'DOCTOR'] },
+      { href: '/admin/homecare', label: 'Home Care', icon: '🏠', roles: ['ADMIN'] },
     ],
   },
   {
     title: 'Administração',
-    items: [{ href: '/admin/usuarios', label: 'Utilizadores', icon: '👥', adminOnly: true }],
+    items: [{ href: '/admin/usuarios', label: 'Utilizadores', icon: '👥', roles: ['ADMIN'] }],
   },
 ]
+
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: 'Administrador',
+  DOCTOR: 'Médico(a)',
+  USER: 'Operador',
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -59,14 +69,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const ready = userRole !== null
-  const isAdmin = userRole === 'ADMIN'
+  const role = userRole || 'USER'
+  const isAdmin = role === 'ADMIN'
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
 
   const visibleSections = SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.adminOnly || isAdmin),
+    items: section.items.filter((item) => item.roles.includes(role)),
   })).filter((section) => section.items.length > 0)
 
   const initial = (userEmail[0] || 'L').toUpperCase()
@@ -78,8 +89,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
       <div>
         <p className="text-base font-extrabold leading-tight tracking-wide text-neutral-900">LABORATE</p>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-green-700">
-          Gestão Laboratorial
+        <p className="text-[10px] font-semibold uppercase leading-tight tracking-widest text-green-700">
+          Gestão Médica e Laboratorial
         </p>
       </div>
     </div>
@@ -87,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-neutral-50 font-sans lg:flex">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 print:hidden lg:hidden">
         {brand}
         <button
           type="button"
@@ -101,14 +112,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 print:hidden lg:hidden"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 transform flex-col justify-between border-r border-neutral-200 bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:shrink-0 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 transform flex-col justify-between border-r border-neutral-200 bg-white transition-transform duration-200 print:hidden lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:shrink-0 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -187,7 +198,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   isAdmin ? 'bg-green-100 text-green-800' : 'bg-neutral-200 text-neutral-700'
                 }`}
               >
-                {isAdmin ? 'Administrador' : 'Operador'}
+                {ROLE_LABEL[role] || 'Operador'}
               </span>
             </div>
           </div>

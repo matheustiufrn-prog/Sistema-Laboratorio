@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 const COMPANY = {
   name: 'LABORATE',
-  subtitle: 'Gestão Laboratorial',
+  subtitle: 'Gestão Médica e Laboratorial ',
   phone: '',
   email: '',
   address: '',

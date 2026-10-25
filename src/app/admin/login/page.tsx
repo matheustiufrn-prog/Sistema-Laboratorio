@@ -48,7 +48,7 @@ export default function LoginPage() {
           </div>
           <h1 className="mt-4 text-2xl font-extrabold tracking-wide text-neutral-900">LABORATE</h1>
           <p className="mt-1 text-xs font-semibold tracking-widest text-green-700 uppercase">
-            Sistema de Gestão Laboratorial
+            Sistema de Gestão Médica e Laboratorial 
           </p>
         </div>
 
