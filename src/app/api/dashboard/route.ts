@@ -1,75 +1,57 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import {
+  loadFinanceData,
+  totalsOf,
+  groupByMonth,
+  monthlyRows,
+  summarize,
+  orderDescription,
+  homeCareDate,
+  round,
+} from '@/lib/finance'
 
 export async function GET() {
   try {
-    // 1. Buscar todas as Ordens Concluídas com Paciente e Exames
-    const completedOrders = await prisma.order.findMany({
-      where: { status: 'CONCLUIDO' },
-      include: {
-        patient: true,
-        items: {
-          include: {
-            exam: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    const data = await loadFinanceData()
 
-    // 2. Buscar todas as Despesas
-    const expenses = await prisma.expense.findMany({
-      orderBy: { date: 'desc' }
-    })
+    const summary = summarize(totalsOf(data))
+    const monthly = monthlyRows(groupByMonth(data))
 
-    // 3. Totais Gerais
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0)
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0)
-    const netProfit = totalRevenue - totalExpenses
-    const totalOrders = completedOrders.length
+    const recent = [
+      ...data.orders.map((o) => ({
+        id: o.id,
+        kind: 'LAB' as const,
+        date: o.createdAt,
+        patient: o.patient?.fullName || 'Paciente',
+        description: orderDescription(o),
+        total: round(o.totalPrice),
+      })),
+      ...data.homeCare.map((h) => ({
+        id: h.id,
+        kind: 'HOMECARE' as const,
+        date: homeCareDate(h),
+        patient: h.patient?.fullName || 'Paciente',
+        description: h.items.map((i) => i.exam?.name).filter(Boolean).join(', ') || '-',
+        total: round(h.totalPrice),
+      })),
+    ]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 15)
 
-    // 4. Agrupamento Mês a Mês
-    const monthlyStats: Record<string, { month: string; revenue: number; expenses: number; ordersCount: number }> = {}
+    const expenses = data.expenses
+      .slice()
+      .reverse()
+      .map((e) => ({
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        category: e.category,
+        date: e.date,
+      }))
 
-    completedOrders.forEach((order) => {
-      const date = new Date(order.createdAt)
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
-
-      if (!monthlyStats[monthKey]) {
-        monthlyStats[monthKey] = { month: monthLabel, revenue: 0, expenses: 0, ordersCount: 0 }
-      }
-      monthlyStats[monthKey].revenue += order.totalPrice
-      monthlyStats[monthKey].ordersCount += 1
-    })
-
-    expenses.forEach((expense) => {
-      const date = new Date(expense.date)
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
-
-      if (!monthlyStats[monthKey]) {
-        monthlyStats[monthKey] = { month: monthLabel, revenue: 0, expenses: 0, ordersCount: 0 }
-      }
-      monthlyStats[monthKey].expenses += expense.amount
-    })
-
-    // Ordenar estatísticas mensais da mais recente para a mais antiga
-    const monthlyData = Object.keys(monthlyStats)
-      .sort((a, b) => b.localeCompare(a))
-      .map((key) => monthlyStats[key])
-
-    return NextResponse.json({
-      totalRevenue,
-      totalExpenses,
-      netProfit,
-      totalOrders,
-      monthlyData,
-      recentOrders: completedOrders,
-      expenses
-    }, { status: 200 })
-  } catch (error: any) {
-    console.error('Erro ao gerar dados do dashboard:', error)
+    return NextResponse.json({ summary, monthly, recent, expenses })
+  } catch (error) {
+    console.error('ERRO AO GERAR DADOS DO DASHBOARD:', error)
     return NextResponse.json({ error: 'Erro ao carregar o dashboard.' }, { status: 500 })
   }
 }

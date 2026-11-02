@@ -26,6 +26,7 @@ interface HomeCareOrder {
   neighborhood: string
   city: string
   collectionLab: string
+  collectionDate: string | null
   collectionFee: number
   travelFee: number
   examsTotal: number
@@ -37,7 +38,28 @@ interface HomeCareOrder {
   reimbursements: Reimbursement[]
 }
 
+const MONTHS = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
 const brl = (v: number) => `R$ ${Number(v || 0).toFixed(2)}`
+
+const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Fortaleza',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+// ISO -> 'AAAA-MM-DD' no horário de Brasília
+const toInputDate = (iso: string) => dateFormatter.format(new Date(iso))
+
+// 'AAAA-MM-DD' -> 'Outubro/2026'
+const monthText = (d: string) => {
+  const [y, m] = d.split('-')
+  return `${MONTHS[Number(m) - 1]}/${y}`
+}
 
 export default function HomeCarePage() {
   const [patients, setPatients] = useState<Patient[]>([])
@@ -50,6 +72,7 @@ export default function HomeCarePage() {
   const [neighborhood, setNeighborhood] = useState('')
   const [city, setCity] = useState('')
   const [collectionLab, setCollectionLab] = useState('')
+  const [collectionDate, setCollectionDate] = useState('')
   const [collectionFee, setCollectionFee] = useState('')
   const [travelFee, setTravelFee] = useState('')
 
@@ -58,6 +81,7 @@ export default function HomeCarePage() {
 
   const [reimbDesc, setReimbDesc] = useState<Record<string, string>>({})
   const [reimbAmount, setReimbAmount] = useState<Record<string, string>>({})
+  const [dateDraft, setDateDraft] = useState<Record<string, string>>({})
 
   const fetchData = async () => {
     try {
@@ -77,6 +101,7 @@ export default function HomeCarePage() {
   }
 
   useEffect(() => {
+    setCollectionDate(toInputDate(new Date().toISOString()))
     fetchData()
   }, [])
 
@@ -106,6 +131,7 @@ export default function HomeCarePage() {
           neighborhood,
           city,
           collectionLab,
+          collectionDate,
           collectionFee,
           travelFee,
         }),
@@ -120,6 +146,7 @@ export default function HomeCarePage() {
         setCity('')
         setCollectionFee('')
         setTravelFee('')
+        setCollectionDate(toInputDate(new Date().toISOString()))
         fetchData()
       } else {
         setError(data.error || 'Erro ao criar a OS de Home Care.')
@@ -137,6 +164,32 @@ export default function HomeCarePage() {
     })
     if (res.ok) fetchData()
     else alert('Erro ao atualizar o status da OS.')
+  }
+
+  const handleSaveDate = async (order: HomeCareOrder) => {
+    const value = dateDraft[order.id]
+    if (!value) return
+
+    const res = await fetch(`/api/homecare/${order.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collectionDate: value }),
+    })
+    const data = await res.json().catch(() => ({}))
+
+    if (res.ok) {
+      setError('')
+      setMessage(`Data da coleta atualizada. Ela entra no financeiro de ${monthText(value)}.`)
+      setDateDraft((p) => {
+        const next = { ...p }
+        delete next[order.id]
+        return next
+      })
+      fetchData()
+    } else {
+      setMessage('')
+      setError(data.error || 'Erro ao atualizar a data da coleta.')
+    }
   }
 
   const handleDelete = async (order: HomeCareOrder) => {
@@ -258,6 +311,22 @@ export default function HomeCarePage() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-neutral-600 mb-1">Data da coleta</label>
+              <input
+                type="date"
+                required
+                value={collectionDate}
+                onChange={(e) => setCollectionDate(e.target.value)}
+                className={inputClass}
+              />
+              {collectionDate && (
+                <p className="mt-1 text-[11px] text-neutral-500">
+                  Entra no financeiro de {monthText(collectionDate)} quando a OS for concluída.
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-neutral-600 mb-1">Bairro da coleta</label>
@@ -375,13 +444,18 @@ export default function HomeCarePage() {
                 .filter((r) => r.status === 'PAGO')
                 .reduce((s, r) => s + r.amount, 0)
 
+              const currentDate = toInputDate(order.collectionDate ?? order.createdAt)
+              const draft = dateDraft[order.id]
+              const shownDate = draft ?? currentDate
+              const dateChanged = Boolean(draft) && draft !== currentDate
+
               return (
                 <div key={order.id} className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-bold text-black">{order.patient?.fullName || 'Paciente'}</p>
                       <p className="text-xs text-neutral-500">
-                        {new Date(order.createdAt).toLocaleDateString('pt-BR')} · {order.neighborhood}, {order.city}
+                        {order.neighborhood}, {order.city}
                       </p>
                       <p className="text-xs text-neutral-600 mt-1">
                         Coleta feita por: <span className="font-semibold">{order.collectionLab}</span>
@@ -424,6 +498,45 @@ export default function HomeCarePage() {
                         Excluir
                       </button>
                     </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs">
+                    <span className="font-semibold text-neutral-600">📅 Data da coleta:</span>
+                    <input
+                      type="date"
+                      value={shownDate}
+                      onChange={(e) => setDateDraft((p) => ({ ...p, [order.id]: e.target.value }))}
+                      className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-black"
+                    />
+                    {dateChanged && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveDate(order)}
+                          className="rounded bg-green-600 px-3 py-1 font-bold text-white transition hover:bg-green-700"
+                        >
+                          Salvar data
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDateDraft((p) => {
+                              const next = { ...p }
+                              delete next[order.id]
+                              return next
+                            })
+                          }
+                          className="rounded bg-neutral-200 px-3 py-1 font-bold text-neutral-700 transition hover:bg-neutral-300"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+                    <span className="text-neutral-500">
+                      {done
+                        ? `Conta no financeiro de ${monthText(shownDate)}`
+                        : `Entra no financeiro de ${monthText(shownDate)} ao concluir`}
+                    </span>
                   </div>
 
                   <p className="text-xs text-neutral-600">

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { homeCareDate } from '@/lib/finance'
 
 const round = (n: number) => Math.round(n * 100) / 100
 
@@ -12,8 +13,9 @@ export async function GET() {
         items: { include: { exam: true } },
         reimbursements: true,
       },
-      orderBy: { createdAt: 'desc' },
     })
+
+    orders.sort((a, b) => homeCareDate(b).getTime() - homeCareDate(a).getTime())
 
     let examsRevenue = 0
     let collectionFees = 0
@@ -50,7 +52,7 @@ export async function GET() {
 
       return {
         id: o.id,
-        date: o.createdAt,
+        date: homeCareDate(o),
         patient: o.patient?.fullName || 'Paciente',
         neighborhood: o.neighborhood,
         city: o.city,

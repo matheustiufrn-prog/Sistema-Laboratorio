@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { homeCareDate } from '@/lib/finance'
+import { parseDateInput, todayInBrasilia } from '@/lib/dates'
 
 const include = {
   patient: true,
@@ -9,10 +11,10 @@ const include = {
 
 export async function GET() {
   try {
-    const orders = await prisma.homeCareOrder.findMany({
-      include,
-      orderBy: { createdAt: 'desc' },
-    })
+    const orders = await prisma.homeCareOrder.findMany({ include })
+
+    orders.sort((a, b) => homeCareDate(b).getTime() - homeCareDate(a).getTime())
+
     return NextResponse.json(orders)
   } catch (error) {
     console.error('ERRO AO LISTAR HOME CARE:', error)
@@ -32,6 +34,10 @@ export async function POST(request: Request) {
     const collectionFee = Number(body.collectionFee) || 0
     const travelFee = Number(body.travelFee) || 0
 
+    const collectionDate = body.collectionDate
+      ? parseDateInput(body.collectionDate)
+      : todayInBrasilia()
+
     if (!patientId) {
       return NextResponse.json({ error: 'Selecione um paciente.' }, { status: 400 })
     }
@@ -43,6 +49,9 @@ export async function POST(request: Request) {
     }
     if (!collectionLab) {
       return NextResponse.json({ error: 'Informe o laboratório que fez a coleta.' }, { status: 400 })
+    }
+    if (!collectionDate) {
+      return NextResponse.json({ error: 'Data da coleta inválida.' }, { status: 400 })
     }
     if (collectionFee < 0 || travelFee < 0) {
       return NextResponse.json({ error: 'As taxas não podem ser negativas.' }, { status: 400 })
@@ -62,6 +71,7 @@ export async function POST(request: Request) {
         neighborhood,
         city,
         collectionLab,
+        collectionDate,
         collectionFee,
         travelFee,
         examsTotal,

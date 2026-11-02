@@ -27,6 +27,10 @@ export const yearRange = (year: number) => ({
   end: new Date(Date.UTC(year + 1, 0, 1) - OFFSET_MS),
 })
 
+// Data que vale para o financeiro: a data da coleta; se não houver, a de cadastro
+export const homeCareDate = (h: { collectionDate: Date | null; createdAt: Date }) =>
+  h.collectionDate ?? h.createdAt
+
 export async function loadFinanceData(range?: { start: Date; end: Date }) {
   const createdAt = range ? { gte: range.start, lt: range.end } : undefined
 
@@ -41,7 +45,17 @@ export async function loadFinanceData(range?: { start: Date; end: Date }) {
       orderBy: { createdAt: 'asc' },
     }),
     prisma.homeCareOrder.findMany({
-      where: { status: 'CONCLUIDO', ...(createdAt ? { createdAt } : {}) },
+      where: {
+        status: 'CONCLUIDO',
+        ...(range
+          ? {
+              OR: [
+                { collectionDate: { gte: range.start, lt: range.end } },
+                { collectionDate: null, createdAt: { gte: range.start, lt: range.end } },
+              ],
+            }
+          : {}),
+      },
       include: {
         patient: { select: { fullName: true, cpf: true } },
         items: { include: { exam: { select: { name: true } } } },
@@ -168,7 +182,7 @@ export function groupByMonth(data: FinanceData) {
   }
 
   for (const o of data.orders) addOrder(get(monthKeyOf(o.createdAt)), o)
-  for (const h of data.homeCare) addHomeCare(get(monthKeyOf(h.createdAt)), h)
+  for (const h of data.homeCare) addHomeCare(get(monthKeyOf(homeCareDate(h))), h)
   for (const e of data.expenses) get(monthKeyOf(e.date)).expenses += e.amount
 
   return map
