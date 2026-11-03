@@ -16,6 +16,10 @@ const ADMIN_ONLY_API = [
   '/api/homecare',
   '/api/reports',
   '/api/medical-records',
+  '/api/revenues',
+  '/api/partners',
+  '/api/revenues',
+  '/api/partners',
 ]
 
 const ADMIN_ONLY_PAGES = [

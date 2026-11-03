@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import {
   loadFinanceData,
   totalsOf,
   groupByMonth,
   monthlyRows,
+  monthLabel,
   summarize,
   orderDescription,
+  orderDate,
   homeCareDate,
   round,
 } from '@/lib/finance'
 
 export async function GET() {
   try {
-    const data = await loadFinanceData()
+    const [data, partners] = await Promise.all([
+      loadFinanceData(),
+      prisma.partner.findMany({ orderBy: { createdAt: 'asc' } }),
+    ])
 
     const summary = summarize(totalsOf(data))
     const monthly = monthlyRows(groupByMonth(data))
@@ -21,7 +27,7 @@ export async function GET() {
       ...data.orders.map((o) => ({
         id: o.id,
         kind: 'LAB' as const,
-        date: o.createdAt,
+        date: orderDate(o),
         patient: o.patient?.fullName || 'Paciente',
         description: orderDescription(o),
         total: round(o.totalPrice),
@@ -36,11 +42,11 @@ export async function GET() {
       })),
     ]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 15)
+      .slice(0, 40)
 
     const expenses = data.expenses
       .slice()
-      .reverse()
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
       .map((e) => ({
         id: e.id,
         description: e.description,
@@ -49,7 +55,25 @@ export async function GET() {
         date: e.date,
       }))
 
-    return NextResponse.json({ summary, monthly, recent, expenses })
+    const revenues = data.manualRevenues
+      .slice()
+      .sort((a, b) => b.month.localeCompare(a.month))
+      .map((r) => ({
+        id: r.id,
+        description: r.description,
+        amount: r.amount,
+        month: r.month,
+        label: monthLabel(r.month),
+      }))
+
+    return NextResponse.json({
+      summary,
+      monthly,
+      recent,
+      expenses,
+      revenues,
+      partners: partners.map((p) => ({ id: p.id, name: p.name, percentage: p.percentage })),
+    })
   } catch (error) {
     console.error('ERRO AO GERAR DADOS DO DASHBOARD:', error)
     return NextResponse.json({ error: 'Erro ao carregar o dashboard.' }, { status: 500 })

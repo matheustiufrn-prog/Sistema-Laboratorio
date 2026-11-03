@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import {
   MONTH_NAMES,
   emptyTotals,
   groupByMonth,
+  homeCareDate,
   isValidMonthKey,
   loadFinanceData,
   monthKeyOf,
   monthLabel,
+  orderDate,
   orderDescription,
   round,
+  shareOut,
   summarize,
   totalsOf,
   yearRange,
@@ -24,16 +28,24 @@ export async function GET(request: Request) {
     }
 
     const year = Number(month.slice(0, 4))
-    const data = await loadFinanceData(yearRange(year))
+
+    const [data, partners] = await Promise.all([
+      loadFinanceData(yearRange(year)),
+      prisma.partner.findMany({ orderBy: { createdAt: 'asc' } }),
+    ])
     const byMonth = groupByMonth(data)
 
+    const summary = summarize(byMonth.get(month) ?? emptyTotals())
+    const yearTotals = summarize(totalsOf(data))
+
     const orders = data.orders
-      .filter((o) => monthKeyOf(o.createdAt) === month)
+      .filter((o) => monthKeyOf(orderDate(o)) === month)
+      .sort((a, b) => orderDate(a).getTime() - orderDate(b).getTime())
       .map((o) => {
         const fee = o.consultationFee || 0
         return {
           id: o.id,
-          date: o.createdAt,
+          date: orderDate(o),
           patient: o.patient?.fullName || 'Paciente',
           cpf: o.patient?.cpf || '',
           description: orderDescription(o),
@@ -44,10 +56,11 @@ export async function GET(request: Request) {
       })
 
     const homeCare = data.homeCare
-      .filter((h) => monthKeyOf(h.createdAt) === month)
+      .filter((h) => monthKeyOf(homeCareDate(h)) === month)
+      .sort((a, b) => homeCareDate(a).getTime() - homeCareDate(b).getTime())
       .map((h) => ({
         id: h.id,
-        date: h.createdAt,
+        date: homeCareDate(h),
         patient: h.patient?.fullName || 'Paciente',
         place: `${h.neighborhood}, ${h.city}`,
         lab: h.collectionLab,
@@ -74,6 +87,14 @@ export async function GET(request: Request) {
         amount: round(e.amount),
       }))
 
+    const manualRevenues = data.manualRevenues
+      .filter((r) => r.month === month)
+      .map((r) => ({
+        id: r.id,
+        description: r.description || 'Receita lançada',
+        amount: round(r.amount),
+      }))
+
     const categoryMap = new Map<string, number>()
     for (const e of expenses) {
       categoryMap.set(e.category, (categoryMap.get(e.category) || 0) + e.amount)
@@ -87,16 +108,27 @@ export async function GET(request: Request) {
       return { key, name, ...summarize(byMonth.get(key) ?? emptyTotals()) }
     })
 
+    const monthShares = shareOut(partners, summary.result)
+    const yearShares = shareOut(partners, yearTotals.result)
+
     return NextResponse.json({
       month,
       label: monthLabel(month),
       generatedAt: new Date().toISOString(),
-      summary: summarize(byMonth.get(month) ?? emptyTotals()),
+      summary,
       orders,
       homeCare,
       expenses,
+      manualRevenues,
       expensesByCategory,
-      year: { year, rows: yearRows, totals: summarize(totalsOf(data)) },
+      partners: partners.map((p, i) => ({
+        id: p.id,
+        name: p.name,
+        percentage: p.percentage,
+        monthAmount: monthShares[i].amount,
+        yearAmount: yearShares[i].amount,
+      })),
+      year: { year, rows: yearRows, totals: yearTotals },
     })
   } catch (error) {
     console.error('ERRO AO GERAR RELATÓRIO MENSAL:', error)

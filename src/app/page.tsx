@@ -10,9 +10,9 @@ interface Summary {
   examsRevenue: number
   consultationsRevenue: number
   homeCareRevenue: number
+  manualRevenue: number
   revenueTotal: number
   expensesTotal: number
-  reimbursementsTotal: number
   result: number
   averageTicket: number
   labOrders: number
@@ -26,6 +26,7 @@ interface MonthlyRow {
   examsRevenue: number
   consultationsRevenue: number
   homeCareRevenue: number
+  manualRevenue: number
   expensesTotal: number
   result: number
 }
@@ -47,23 +48,112 @@ interface Expense {
   date: string
 }
 
+interface Revenue {
+  id: string
+  description: string
+  amount: number
+  month: string
+  label: string
+}
+
+interface Partner {
+  id: string
+  name: string
+  percentage: number
+}
+
 const brl = (v: number) =>
   Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Fortaleza',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+const toInputDate = (iso: string) => dateFormatter.format(new Date(iso))
+
+async function request(url: string, method: string, body?: unknown) {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  return { ok: res.ok, data }
+}
+
+function DateEditor({
+  value,
+  type = 'date',
+  onSave,
+}: {
+  value: string
+  type?: 'date' | 'month'
+  onSave: (v: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState(value)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
+  const changed = draft !== '' && draft !== value
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        type={type}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-black"
+      />
+      {changed && (
+        <button
+          type="button"
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true)
+            await onSave(draft)
+            setSaving(false)
+          }}
+          className="rounded bg-green-600 px-2 py-1 text-xs font-bold text-white transition hover:bg-green-700 disabled:opacity-60"
+        >
+          Salvar
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
 
   const [summary, setSummary] = useState<Summary | null>(null)
   const [monthly, setMonthly] = useState<MonthlyRow[]>([])
   const [recent, setRecent] = useState<RecentItem[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [revenues, setRevenues] = useState<Revenue[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
 
   const [expDescription, setExpDescription] = useState('')
   const [expAmount, setExpAmount] = useState('')
   const [expCategory, setExpCategory] = useState('Operacional')
-  const [expSuccess, setExpSuccess] = useState('')
+  const [expDate, setExpDate] = useState('')
+
+  const [revDescription, setRevDescription] = useState('')
+  const [revAmount, setRevAmount] = useState('')
+  const [revMonth, setRevMonth] = useState('')
+
+  const [partnerName, setPartnerName] = useState('')
+  const [partnerPct, setPartnerPct] = useState('')
+  const [rateioMonth, setRateioMonth] = useState('all')
 
   const fetchDashboard = async () => {
     try {
@@ -74,6 +164,8 @@ export default function AdminDashboardPage() {
         setMonthly(data.monthly || [])
         setRecent(data.recent || [])
         setExpenses(data.expenses || [])
+        setRevenues(data.revenues || [])
+        setPartners(data.partners || [])
       }
     } catch (err) {
       console.error(err)
@@ -85,44 +177,98 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (localStorage.getItem('user_role') !== 'ADMIN') {
       router.push('/admin/pacientes')
-    } else {
-      setAuthorized(true)
-      fetchDashboard()
+      return
     }
+    const today = toInputDate(new Date().toISOString())
+    setExpDate(today)
+    setRevMonth(today.slice(0, 7))
+    setAuthorized(true)
+    fetchDashboard()
   }, [router])
+
+  const done = async (result: { ok: boolean; data: { error?: string } }, okMessage: string) => {
+    if (result.ok) {
+      setError('')
+      setNotice(okMessage)
+      await fetchDashboard()
+    } else {
+      setNotice('')
+      setError(result.data.error || 'Não foi possível concluir a ação.')
+    }
+  }
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
-    setExpSuccess('')
-
-    try {
-      const res = await fetch('/api/expenses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: expDescription, amount: expAmount, category: expCategory }),
-      })
-
-      if (res.ok) {
-        setExpSuccess('Despesa cadastrada com sucesso!')
-        setExpDescription('')
-        setExpAmount('')
-        fetchDashboard()
-      }
-    } catch (err) {
-      console.error(err)
+    const result = await request('/api/expenses', 'POST', {
+      description: expDescription,
+      amount: expAmount,
+      category: expCategory,
+      date: expDate,
+    })
+    if (result.ok) {
+      setExpDescription('')
+      setExpAmount('')
     }
+    await done(result, 'Despesa cadastrada com sucesso!')
   }
 
   const handleDeleteExpense = async (id: string) => {
     if (!confirm('Deseja realmente excluir esta despesa?')) return
+    await done(await request(`/api/expenses/${id}`, 'DELETE'), 'Despesa excluída.')
+  }
 
-    try {
-      const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' })
-      if (res.ok) fetchDashboard()
-      else alert('Erro ao excluir despesa.')
-    } catch (err) {
-      console.error(err)
+  const handleAddRevenue = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const result = await request('/api/revenues', 'POST', {
+      description: revDescription,
+      amount: revAmount,
+      month: revMonth,
+    })
+    if (result.ok) {
+      setRevDescription('')
+      setRevAmount('')
     }
+    await done(result, 'Receita lançada com sucesso!')
+  }
+
+  const handleDeleteRevenue = async (id: string) => {
+    if (!confirm('Excluir esta receita lançada?')) return
+    await done(await request(`/api/revenues/${id}`, 'DELETE'), 'Receita excluída.')
+  }
+
+  const handleAddPartner = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const result = await request('/api/partners', 'POST', {
+      name: partnerName,
+      percentage: partnerPct,
+    })
+    if (result.ok) {
+      setPartnerName('')
+      setPartnerPct('')
+    }
+    await done(result, 'Sócio cadastrado.')
+  }
+
+  const handleEditPartner = async (p: Partner) => {
+    const typed = window.prompt(`Nova porcentagem de ${p.name} (%):`, String(p.percentage))
+    if (typed === null) return
+    await done(
+      await request(`/api/partners/${p.id}`, 'PATCH', { percentage: typed.replace(',', '.') }),
+      'Porcentagem atualizada.'
+    )
+  }
+
+  const handleDeletePartner = async (p: Partner) => {
+    if (!confirm(`Remover ${p.name} do rateio?`)) return
+    await done(await request(`/api/partners/${p.id}`, 'DELETE'), 'Sócio removido.')
+  }
+
+  const saveRecentDate = async (item: RecentItem, value: string) => {
+    const result =
+      item.kind === 'LAB'
+        ? await request(`/api/orders/${item.id}/date`, 'PATCH', { serviceDate: value })
+        : await request(`/api/homecare/${item.id}`, 'PATCH', { collectionDate: value })
+    await done(result, 'Data atualizada. O valor passou para o mês da nova data.')
   }
 
   if (!authorized) {
@@ -149,15 +295,20 @@ export default function AdminDashboardPage() {
 
   const streams = [
     { label: '🔬 Exames (laboratório)', value: s?.examsRevenue, note: `${s?.labOrders ?? 0} OS concluídas` },
-    {
-      label: '🩺 Consultas médicas',
-      value: s?.consultationsRevenue,
-      note: `${s?.consultations ?? 0} consulta(s)`,
-    },
+    { label: '🩺 Consultas médicas', value: s?.consultationsRevenue, note: `${s?.consultations ?? 0} consulta(s)` },
     { label: '🏠 Home Care', value: s?.homeCareRevenue, note: `${s?.homeCareOrders ?? 0} OS concluídas` },
+    { label: '✍️ Receitas lançadas', value: s?.manualRevenue, note: `${revenues.length} lançamento(s)` },
   ]
 
+  const baseResult =
+    rateioMonth === 'all' ? s?.result ?? 0 : monthly.find((m) => m.key === rateioMonth)?.result ?? 0
+  const totalPct = partners.reduce((sum, p) => sum + p.percentage, 0)
+  const share = (pct: number) => Math.round(baseResult * pct) / 100
+  const remainingPct = Math.round((100 - totalPct) * 100) / 100
+
   const inputClass = 'w-full rounded border border-neutral-300 p-2 text-sm text-black'
+  const labelClass = 'mb-1 block text-xs font-semibold text-neutral-600'
+  const cardClass = 'space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm'
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-8 font-sans">
@@ -165,7 +316,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">Painel Financeiro & Operacional</h1>
           <p className="mt-1 text-sm text-green-100">
-            Visão consolidada de exames, consultas e Home Care, com despesas e resultado.
+            Visão consolidada de exames, consultas, Home Care e receitas lançadas, com despesas, resultado e rateio.
           </p>
         </div>
         <a
@@ -175,6 +326,9 @@ export default function AdminDashboardPage() {
           🗓️ Relatório mensal
         </a>
       </div>
+
+      {notice && <p className="rounded bg-green-100 p-2 text-xs font-bold text-green-700">{notice}</p>}
+      {error && <p className="rounded bg-red-100 p-2 text-xs font-bold text-red-700">{error}</p>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {cards.map((c) => (
@@ -187,7 +341,7 @@ export default function AdminDashboardPage() {
 
       <div className="space-y-3">
         <h2 className="text-lg font-bold text-neutral-800">Receita por origem</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {streams.map((x) => (
             <div key={x.label} className="rounded-xl border border-green-200 bg-green-50 p-5">
               <p className="text-sm font-bold text-green-900">{x.label}</p>
@@ -199,7 +353,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className={`${cardClass} lg:col-span-2`}>
           <h2 className="text-lg font-bold text-neutral-800">📅 Desempenho mês a mês</h2>
 
           {loading ? (
@@ -216,6 +370,7 @@ export default function AdminDashboardPage() {
                     <th className="p-3">Exames</th>
                     <th className="p-3">Consultas</th>
                     <th className="p-3">Home Care</th>
+                    <th className="p-3">Lançadas</th>
                     <th className="p-3">Despesas</th>
                     <th className="p-3 text-right">Resultado</th>
                   </tr>
@@ -228,6 +383,7 @@ export default function AdminDashboardPage() {
                       <td className="p-3 font-semibold text-green-700">{brl(m.examsRevenue)}</td>
                       <td className="p-3 font-semibold text-green-700">{brl(m.consultationsRevenue)}</td>
                       <td className="p-3 font-semibold text-green-700">{brl(m.homeCareRevenue)}</td>
+                      <td className="p-3 font-semibold text-green-700">{brl(m.manualRevenue)}</td>
                       <td className="p-3 font-semibold text-red-600">{brl(m.expensesTotal)}</td>
                       <td
                         className={`p-3 text-right font-extrabold ${
@@ -244,13 +400,12 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <div className={cardClass}>
           <h2 className="text-lg font-bold text-neutral-800">💸 Registrar nova despesa</h2>
-          {expSuccess && <p className="rounded bg-green-100 p-2 text-xs font-bold text-green-700">{expSuccess}</p>}
 
           <form onSubmit={handleAddExpense} className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-neutral-600">Descrição</label>
+              <label className={labelClass}>Descrição</label>
               <input
                 type="text"
                 required
@@ -260,20 +415,32 @@ export default function AdminDashboardPage() {
                 className={inputClass}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-neutral-600">Valor (R$)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={expAmount}
-                onChange={(e) => setExpAmount(e.target.value)}
-                placeholder="150.00"
-                className={inputClass}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Valor (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={expAmount}
+                  onChange={(e) => setExpAmount(e.target.value)}
+                  placeholder="150.00"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Data</label>
+                <input
+                  type="date"
+                  required
+                  value={expDate}
+                  onChange={(e) => setExpDate(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-neutral-600">Categoria</label>
+              <label className={labelClass}>Categoria</label>
               <select
                 value={expCategory}
                 onChange={(e) => setExpCategory(e.target.value)}
@@ -293,32 +460,35 @@ export default function AdminDashboardPage() {
             </button>
           </form>
 
-          <div className="max-h-56 space-y-2 overflow-y-auto border-t pt-4">
+          <div className="max-h-72 space-y-2 overflow-y-auto border-t pt-4">
             <h3 className="text-xs font-bold uppercase text-neutral-500">Despesas lançadas</h3>
             {expenses.length === 0 ? (
               <p className="text-xs text-neutral-400">Nenhuma despesa lançada.</p>
             ) : (
               expenses.map((exp) => (
-                <div
-                  key={exp.id}
-                  className="flex items-center justify-between rounded border bg-neutral-50 p-2 text-xs"
-                >
-                  <div>
-                    <p className="font-bold text-black">{exp.description}</p>
-                    <p className="text-neutral-500">
-                      {exp.category} - {new Date(exp.date).toLocaleDateString('pt-BR')}
-                    </p>
+                <div key={exp.id} className="space-y-2 rounded border bg-neutral-50 p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-black">{exp.description}</p>
+                      <p className="text-neutral-500">{exp.category}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-red-600">{brl(exp.amount)}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExpense(exp.id)}
+                        className="rounded bg-red-100 px-2 py-1 font-bold text-red-700 hover:bg-red-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-red-600">{brl(exp.amount)}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteExpense(exp.id)}
-                      className="rounded bg-red-100 px-2 py-1 font-bold text-red-700 hover:bg-red-200"
-                    >
-                      ✕
-                    </button>
-                  </div>
+                  <DateEditor
+                    value={toInputDate(exp.date)}
+                    onSave={async (v) =>
+                      done(await request(`/api/expenses/${exp.id}`, 'PATCH', { date: v }), 'Data da despesa atualizada.')
+                    }
+                  />
                 </div>
               ))
             )}
@@ -326,8 +496,218 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className={cardClass}>
+          <h2 className="text-lg font-bold text-neutral-800">✍️ Lançar receita do mês</h2>
+          <p className="text-xs text-neutral-500">
+            Use para receitas que não estão nas OS do sistema. O valor conta no mês de referência escolhido.
+          </p>
+
+          <form onSubmit={handleAddRevenue} className="space-y-3">
+            <div>
+              <label className={labelClass}>Descrição (opcional)</label>
+              <input
+                type="text"
+                value={revDescription}
+                onChange={(e) => setRevDescription(e.target.value)}
+                placeholder="Ex: Faturamento convênio"
+                className={inputClass}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Valor total (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  value={revAmount}
+                  onChange={(e) => setRevAmount(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Mês de referência</label>
+                <input
+                  type="month"
+                  required
+                  value={revMonth}
+                  onChange={(e) => setRevMonth(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+            >
+              Lançar receita
+            </button>
+          </form>
+
+          <div className="max-h-64 space-y-2 overflow-y-auto border-t pt-4">
+            <h3 className="text-xs font-bold uppercase text-neutral-500">Receitas lançadas</h3>
+            {revenues.length === 0 ? (
+              <p className="text-xs text-neutral-400">Nenhuma receita lançada.</p>
+            ) : (
+              revenues.map((r) => (
+                <div key={r.id} className="space-y-2 rounded border bg-neutral-50 p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-black">{r.description || 'Receita lançada'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-green-700">{brl(r.amount)}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRevenue(r.id)}
+                        className="rounded bg-red-100 px-2 py-1 font-bold text-red-700 hover:bg-red-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-500">Mês:</span>
+                    <DateEditor
+                      type="month"
+                      value={r.month}
+                      onSave={async (v) =>
+                        done(await request(`/api/revenues/${r.id}`, 'PATCH', { month: v }), 'Mês da receita atualizado.')
+                      }
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className={cardClass}>
+          <h2 className="text-lg font-bold text-neutral-800">🤝 Rateio entre sócios</h2>
+          <p className="text-xs text-neutral-500">
+            Divide o resultado líquido entre os sócios, conforme a porcentagem de cada um.
+          </p>
+
+          <form onSubmit={handleAddPartner} className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+            <input
+              type="text"
+              required
+              value={partnerName}
+              onChange={(e) => setPartnerName(e.target.value)}
+              placeholder="Nome do sócio"
+              className={`${inputClass} sm:col-span-3`}
+            />
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              required
+              value={partnerPct}
+              onChange={(e) => setPartnerPct(e.target.value)}
+              placeholder="%"
+              className={inputClass}
+            />
+            <button
+              type="submit"
+              className="rounded bg-green-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+            >
+              Adicionar
+            </button>
+          </form>
+
+          {partners.length > 0 && Math.abs(remainingPct) > 0.0001 && (
+            <p className="rounded bg-yellow-50 p-2 text-xs font-semibold text-yellow-800">
+              Distribuído: {totalPct}%. Ainda não distribuído: {remainingPct}%.
+            </p>
+          )}
+
+          <div className="space-y-1 border-t pt-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold uppercase text-neutral-500">Base do rateio</h3>
+              <select
+                value={rateioMonth}
+                onChange={(e) => setRateioMonth(e.target.value)}
+                className="rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-black"
+              >
+                <option value="all">Todos os meses</option>
+                {monthly.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-between rounded bg-green-50 p-2 text-sm">
+              <span className="font-semibold text-green-900">Resultado líquido</span>
+              <span className={`font-extrabold ${baseResult >= 0 ? 'text-green-800' : 'text-red-700'}`}>
+                {brl(baseResult)}
+              </span>
+            </div>
+
+            {partners.length === 0 ? (
+              <p className="pt-2 text-xs text-neutral-400">Cadastre os sócios para ver o rateio.</p>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b text-xs text-neutral-500">
+                    <th className="p-2">Sócio</th>
+                    <th className="p-2 text-right">%</th>
+                    <th className="p-2 text-right">Valor</th>
+                    <th className="p-2" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {partners.map((p) => (
+                    <tr key={p.id} className="border-b">
+                      <td className="p-2 font-semibold text-black">{p.name}</td>
+                      <td className="p-2 text-right text-neutral-700">{p.percentage}%</td>
+                      <td
+                        className={`p-2 text-right font-bold ${
+                          share(p.percentage) >= 0 ? 'text-green-700' : 'text-red-700'
+                        }`}
+                      >
+                        {brl(share(p.percentage))}
+                      </td>
+                      <td className="p-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleEditPartner(p)}
+                          className="mr-1 rounded bg-neutral-100 px-2 py-1 text-xs font-bold text-neutral-800 hover:bg-neutral-200"
+                        >
+                          %
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePartner(p)}
+                          className="rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-200"
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {Math.abs(remainingPct) > 0.0001 && (
+                    <tr className="text-neutral-500">
+                      <td className="p-2">Não distribuído</td>
+                      <td className="p-2 text-right">{remainingPct}%</td>
+                      <td className="p-2 text-right">{brl(share(remainingPct))}</td>
+                      <td />
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className={cardClass}>
         <h2 className="text-lg font-bold text-neutral-800">🧾 Últimos atendimentos concluídos</h2>
+        <p className="text-xs text-neutral-500">
+          Altere a data de um atendimento para ele passar a contar no mês correto. Mostrando os 40 mais recentes.
+        </p>
 
         {loading ? (
           <p className="text-sm text-neutral-500">Carregando detalhes...</p>
@@ -348,7 +728,9 @@ export default function AdminDashboardPage() {
               <tbody>
                 {recent.map((r) => (
                   <tr key={`${r.kind}-${r.id}`} className="border-b hover:bg-neutral-50">
-                    <td className="p-3 text-neutral-600">{new Date(r.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="p-3">
+                      <DateEditor value={toInputDate(r.date)} onSave={(v) => saveRecentDate(r, v)} />
+                    </td>
                     <td className="p-3">
                       <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
                         {r.kind === 'HOMECARE' ? '🏠 Home Care' : 'Laboratório'}

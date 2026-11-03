@@ -27,16 +27,29 @@ export const yearRange = (year: number) => ({
   end: new Date(Date.UTC(year + 1, 0, 1) - OFFSET_MS),
 })
 
-// Data que vale para o financeiro: a data da coleta; se não houver, a de cadastro
+// Data que vale para o financeiro: a data do atendimento; se não houver, a de cadastro
+export const orderDate = (o: { serviceDate: Date | null; createdAt: Date }) =>
+  o.serviceDate ?? o.createdAt
+
 export const homeCareDate = (h: { collectionDate: Date | null; createdAt: Date }) =>
   h.collectionDate ?? h.createdAt
 
 export async function loadFinanceData(range?: { start: Date; end: Date }) {
-  const createdAt = range ? { gte: range.start, lt: range.end } : undefined
+  const year = range ? monthKeyOf(range.start).slice(0, 4) : undefined
 
-  const [orders, homeCare, expenses] = await Promise.all([
+  const [orders, homeCare, expenses, manualRevenues] = await Promise.all([
     prisma.order.findMany({
-      where: { status: { in: DONE_STATUS }, ...(createdAt ? { createdAt } : {}) },
+      where: {
+        status: { in: DONE_STATUS },
+        ...(range
+          ? {
+              OR: [
+                { serviceDate: { gte: range.start, lt: range.end } },
+                { serviceDate: null, createdAt: { gte: range.start, lt: range.end } },
+              ],
+            }
+          : {}),
+      },
       include: {
         patient: { select: { fullName: true, cpf: true } },
         professional: { select: { name: true, specialty: true } },
@@ -67,9 +80,13 @@ export async function loadFinanceData(range?: { start: Date; end: Date }) {
       where: range ? { date: { gte: range.start, lt: range.end } } : undefined,
       orderBy: { date: 'asc' },
     }),
+    prisma.manualRevenue.findMany({
+      where: year ? { month: { startsWith: year } } : undefined,
+      orderBy: [{ month: 'asc' }, { createdAt: 'asc' }],
+    }),
   ])
 
-  return { orders, homeCare, expenses }
+  return { orders, homeCare, expenses, manualRevenues }
 }
 
 export type FinanceData = Awaited<ReturnType<typeof loadFinanceData>>
@@ -83,6 +100,7 @@ export interface Totals {
   homeCareExamsRevenue: number
   collectionFees: number
   travelFees: number
+  manualRevenue: number
   expenses: number
   reimbursementsPending: number
   reimbursementsPaid: number
@@ -97,6 +115,7 @@ export const emptyTotals = (): Totals => ({
   homeCareExamsRevenue: 0,
   collectionFees: 0,
   travelFees: 0,
+  manualRevenue: 0,
   expenses: 0,
   reimbursementsPending: 0,
   reimbursementsPaid: 0,
@@ -133,7 +152,8 @@ export function addHomeCare(
 
 export function summarize(t: Totals) {
   const homeCareRevenue = t.homeCareExamsRevenue + t.collectionFees + t.travelFees
-  const revenueTotal = t.examsRevenue + t.consultationsRevenue + homeCareRevenue
+  const revenueTotal =
+    t.examsRevenue + t.consultationsRevenue + homeCareRevenue + t.manualRevenue
   const reimbursementsTotal = t.reimbursementsPending + t.reimbursementsPaid
   const expensesTotal = t.expenses + reimbursementsTotal
   const services = t.labOrders + t.homeCareOrders
@@ -149,6 +169,7 @@ export function summarize(t: Totals) {
     collectionFees: round(t.collectionFees),
     travelFees: round(t.travelFees),
     homeCareRevenue: round(homeCareRevenue),
+    manualRevenue: round(t.manualRevenue),
     revenueTotal: round(revenueTotal),
     operatingExpenses: round(t.expenses),
     reimbursementsPending: round(t.reimbursementsPending),
@@ -167,6 +188,7 @@ export function totalsOf(data: FinanceData) {
   for (const o of data.orders) addOrder(t, o)
   for (const h of data.homeCare) addHomeCare(t, h)
   for (const e of data.expenses) t.expenses += e.amount
+  for (const r of data.manualRevenues) t.manualRevenue += r.amount
   return t
 }
 
@@ -181,9 +203,10 @@ export function groupByMonth(data: FinanceData) {
     return t
   }
 
-  for (const o of data.orders) addOrder(get(monthKeyOf(o.createdAt)), o)
+  for (const o of data.orders) addOrder(get(monthKeyOf(orderDate(o))), o)
   for (const h of data.homeCare) addHomeCare(get(monthKeyOf(homeCareDate(h))), h)
   for (const e of data.expenses) get(monthKeyOf(e.date)).expenses += e.amount
+  for (const r of data.manualRevenues) get(r.month).manualRevenue += r.amount
 
   return map
 }
@@ -192,6 +215,18 @@ export function monthlyRows(map: Map<string, Totals>) {
   return Array.from(map.entries())
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([key, t]) => ({ key, label: monthLabel(key), ...summarize(t) }))
+}
+
+export function shareOut(
+  partners: { id: string; name: string; percentage: number }[],
+  result: number
+) {
+  return partners.map((p) => ({
+    id: p.id,
+    name: p.name,
+    percentage: p.percentage,
+    amount: Math.round(result * p.percentage) / 100,
+  }))
 }
 
 export function orderDescription(o: {

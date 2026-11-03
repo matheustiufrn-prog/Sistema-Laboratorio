@@ -97,6 +97,7 @@ model Order {
   professionalId  String?
   professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
   consultationFee Float         @default(0)
+  serviceDate     DateTime?
   totalPrice      Float
   status          String        @default("PENDING")
   items           OrderItem[]
@@ -142,6 +143,7 @@ model HomeCareOrder {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 }
+
 model HomeCareItem {
   id              String        @id @default(uuid())
   homeCareOrderId String
@@ -173,4 +175,21 @@ model LabResult {
   fileSize  Int
   data      Bytes
   createdAt DateTime @default(now())
+}
+
+model ManualRevenue {
+  id          String   @id @default(uuid())
+  description String   @default("")
+  amount      Float
+  month       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Partner {
+  id         String   @id @default(uuid())
+  name       String
+  percentage Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

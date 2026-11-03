@@ -21,8 +21,7 @@ const SECTIONS: NavSection[] = [
   {
     title: 'Principal',
     items: [
-      { href: '/admin', label: 'Dashboard Financeiro', icon: '📊', roles: ['ADMIN'] },
-      { href: '/admin/relatorios', label: 'Relatório Mensal', icon: '🗓️', roles: ['ADMIN'] },
+      { href: '/admin', label: 'Financeiro', icon: '📊', roles: ['ADMIN'] },
     ],
   },
   {
