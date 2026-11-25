@@ -103,7 +103,7 @@ export default function OrcamentosPage() {
   return (
     <div className="p-8 space-y-8 font-sans max-w-6xl mx-auto">
       <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
-        <h1 className="text-2xl font-bold">🧾 Orçamentos</h1>
+        <h1 className="text-2xl font-bold">Orçamentos</h1>
         <p className="text-green-100 text-sm mt-1">
           Abra o orçamento de qualquer OS para imprimir ou salvar em PDF e enviar ao paciente.
         </p>
@@ -172,7 +172,7 @@ export default function OrcamentosPage() {
                             : 'bg-neutral-100 text-neutral-700 border-neutral-200'
                         }`}
                       >
-                        {r.kind === 'homecare' ? '🏠 Home Care' : 'Laboratório'}
+                        {r.kind === 'homecare' ? 'Home Care' : 'Laboratório'}
                       </span>
                       {r.place && <span className="block mt-1 text-xs text-neutral-500">{r.place}</span>}
                     </td>
@@ -198,7 +198,7 @@ export default function OrcamentosPage() {
                         rel="noopener noreferrer"
                         className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-xs transition"
                       >
-                        🖨️ Abrir / Imprimir
+                        Abrir / Imprimir
                       </a>
                     </td>
                   </tr>

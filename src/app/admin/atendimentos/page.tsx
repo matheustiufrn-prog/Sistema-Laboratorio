@@ -167,7 +167,7 @@ export default function OrdersPage() {
 
       {/* Formulário de Nova OS */}
       <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-neutral-800">📋 Novo Atendimento / Orçamento</h2>
+        <h2 className="text-lg font-bold text-neutral-800">Novo Atendimento / Orçamento</h2>
 
         <div>
           <label className="block text-xs font-semibold text-neutral-600 mb-1">Selecione o Paciente</label>
@@ -211,7 +211,7 @@ export default function OrdersPage() {
             onClick={() => handleCreateOrder('ORCAMENTO')}
             className="flex-1 bg-neutral-600 hover:bg-neutral-700 text-white font-bold py-3 px-4 rounded-lg text-sm transition"
           >
-            📄 Salvar como Orçamento
+            Salvar como Orçamento
           </button>
           <button
             type="button"
@@ -225,7 +225,7 @@ export default function OrdersPage() {
 
       {/* Histórico */}
       <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
-        <h2 className="text-lg font-bold mb-4 text-neutral-800">📊 Histórico de Ordens de Serviço</h2>
+        <h2 className="text-lg font-bold mb-4 text-neutral-800">Histórico de Ordens de Serviço</h2>
         {loading ? (
           <p className="text-neutral-500 text-sm">Carregando...</p>
         ) : orders.length === 0 ? (

@@ -224,7 +224,7 @@ export default function MonthlyReport({ month }: { month: string }) {
             disabled={!report}
             className="rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-bold text-green-700 shadow-sm transition hover:bg-green-50 disabled:opacity-50"
           >
-            📊 Exportar Excel
+            Exportar Excel
           </button>
           <button
             type="button"
@@ -232,7 +232,7 @@ export default function MonthlyReport({ month }: { month: string }) {
             disabled={!report}
             className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-50"
           >
-            🖨️ Imprimir / Salvar PDF
+            Imprimir / Salvar PDF
           </button>
         </div>
       </div>

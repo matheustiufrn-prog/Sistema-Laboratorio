@@ -93,14 +93,14 @@ export default function QuoteDocument({ data }: { data: QuoteData }) {
             onClick={handleCopy}
             className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
           >
-            {copied ? 'Copiado ✓' : '📋 Copiar resumo (WhatsApp)'}
+            {copied ? 'Copiado ✓' : 'Copiar resumo (WhatsApp)'}
           </button>
           <button
             type="button"
             onClick={() => window.print()}
             className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-green-700"
           >
-            🖨️ Imprimir / Salvar PDF
+            Imprimir / Salvar PDF
           </button>
         </div>
       </div>

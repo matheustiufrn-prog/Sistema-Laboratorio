@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import HomeCareFinance from '@/components/HomeCareFinance'
 import MonthlyReport from '@/components/MonthlyReport'
+import HeroCard from '@/components/HeroCard'
+import Sparkline from '@/components/Sparkline'
 
 interface Summary {
   services: number
@@ -60,11 +62,11 @@ interface Partner {
 type Tab = 'geral' | 'lancamentos' | 'rateio' | 'relatorio' | 'homecare'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'geral', label: '📊 Visão geral' },
-  { id: 'lancamentos', label: '✍️ Lançamentos' },
-  { id: 'rateio', label: '🤝 Rateio' },
-  { id: 'relatorio', label: '🗓️ Relatório mensal' },
-  { id: 'homecare', label: '🏠 Home Care' },
+  { id: 'geral', label: 'Visão geral' },
+  { id: 'lancamentos', label: '✍Lançamentos' },
+  { id: 'rateio', label: 'Rateio' },
+  { id: 'relatorio', label: 'Relatório mensal' },
+  { id: 'homecare', label: 'Home Care' },
 ]
 
 const MONTH_NAMES = [
@@ -200,16 +202,23 @@ function Kpi({
   value,
   color,
   footer,
+  spark,
 }: {
   label: string
   value: string
   color: string
   footer: React.ReactNode
+  spark?: number[]
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+    <div className="lift rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
       <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">{label}</p>
       <p className={`mt-1 text-2xl font-extrabold ${color}`}>{value}</p>
+      {spark && spark.length > 1 && (
+        <div className={`mt-2 ${color}`}>
+          <Sparkline values={spark} />
+        </div>
+      )}
       <div className="mt-2">{footer}</div>
     </div>
   )
@@ -635,21 +644,33 @@ export default function FinanceiroPage() {
 
       {tab === 'geral' && (
         <div className="space-y-6">
+          <HeroCard
+            monthLabel={monthLabel(month)}
+            revenue={cur.revenueTotal}
+            previousRevenue={prev.revenueTotal}
+            result={cur.result}
+            services={cur.services}
+            loading={loading}
+          />
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Kpi
               label="Faturamento do mês"
+              spark={series.slice(-6).map((s) => s.row.revenueTotal)}
               value={loading ? '...' : brl(cur.revenueTotal)}
               color="text-green-700"
               footer={<Delta value={growth(cur.revenueTotal, prev.revenueTotal)} />}
             />
             <Kpi
               label="Despesas do mês"
+              spark={series.slice(-6).map((s) => s.row.expensesTotal)}
               value={loading ? '...' : brl(cur.expensesTotal)}
               color="text-red-600"
               footer={<Delta value={growth(cur.expensesTotal, prev.expensesTotal)} inverse />}
             />
             <Kpi
               label="Resultado líquido"
+              spark={series.slice(-6).map((s) => s.row.result)}
               value={loading ? '...' : brl(cur.result)}
               color={cur.result >= 0 ? 'text-green-800' : 'text-red-700'}
               footer={<Delta value={growth(cur.result, prev.result)} />}
@@ -667,6 +688,7 @@ export default function FinanceiroPage() {
             />
             <Kpi
               label="Atendimentos (OS)"
+              spark={series.slice(-6).map((s) => s.row.services)}
               value={loading ? '...' : String(cur.services)}
               color="text-neutral-800"
               footer={<Delta value={growth(cur.services, prev.services)} />}
@@ -742,7 +764,7 @@ export default function FinanceiroPage() {
           </div>
 
           <div className={cardClass}>
-            <h2 className="text-lg font-bold text-neutral-800">📅 Desempenho mês a mês</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Desempenho mês a mês</h2>
             <p className="text-xs text-neutral-500">Clique em uma linha para selecionar o mês.</p>
 
             {loading ? (
@@ -811,7 +833,7 @@ export default function FinanceiroPage() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className={cardClass}>
-              <h2 className="text-lg font-bold text-neutral-800">✍️ Lançar receita do mês</h2>
+              <h2 className="text-lg font-bold text-neutral-800">✍Lançar receita do mês</h2>
               <p className="text-xs text-neutral-500">
                 Use para receitas que não estão nas OS do sistema. O valor conta no mês de referência escolhido.
               </p>
@@ -898,7 +920,7 @@ export default function FinanceiroPage() {
             </div>
 
             <div className={cardClass}>
-              <h2 className="text-lg font-bold text-neutral-800">💸 Registrar despesa</h2>
+              <h2 className="text-lg font-bold text-neutral-800">Registrar despesa</h2>
 
               <form onSubmit={handleAddExpense} className="space-y-3">
                 <div>
@@ -999,7 +1021,7 @@ export default function FinanceiroPage() {
           </div>
 
           <div className={cardClass}>
-            <h2 className="text-lg font-bold text-neutral-800">🧾 Atendimentos concluídos</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Atendimentos concluídos</h2>
             <p className="text-xs text-neutral-500">
               Altere a data de um atendimento para ele passar a contar no mês correto. Mostrando os 40 mais recentes.
             </p>
@@ -1028,7 +1050,7 @@ export default function FinanceiroPage() {
                         </td>
                         <td className="p-3">
                           <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
-                            {r.kind === 'HOMECARE' ? '🏠 Home Care' : 'Laboratório'}
+                            {r.kind === 'HOMECARE' ? 'Home Care' : 'Laboratório'}
                           </span>
                         </td>
                         <td className="p-3 font-semibold text-black">{r.patient}</td>
@@ -1050,7 +1072,7 @@ export default function FinanceiroPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className={cardClass}>
-              <h2 className="text-lg font-bold text-neutral-800">🤝 Sócios e porcentagens</h2>
+              <h2 className="text-lg font-bold text-neutral-800">Sócios e porcentagens</h2>
               <p className="text-xs text-neutral-500">
                 A soma das porcentagens não pode passar de 100%. O rateio divide o resultado líquido.
               </p>

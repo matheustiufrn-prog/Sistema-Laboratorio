@@ -284,7 +284,7 @@ export default function OrdersAdminPage() {
         </div>
 
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-          <h2 className="text-lg font-bold text-neutral-800">📋 Ordens de Serviço Cadastradas</h2>
+          <h2 className="text-lg font-bold text-neutral-800">Ordens de Serviço Cadastradas</h2>
 
           {loading ? (
             <p className="text-neutral-500 text-sm">Carregando ordens...</p>
@@ -340,7 +340,7 @@ export default function OrdersAdminPage() {
                               rel="noopener noreferrer"
                               className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-3 py-1 rounded text-xs transition"
                             >
-                              🖨️ Orçamento
+                              Orçamento
                             </a>
 
                             {!isCompleted ? (

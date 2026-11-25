@@ -299,7 +299,7 @@ export default function ConsultasPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-8 font-sans">
       <div className="rounded-2xl border-l-8 border-green-500 bg-green-800 p-6 text-white shadow-md">
-        <h1 className="text-2xl font-bold">🩺 Consultas Médicas</h1>
+        <h1 className="text-2xl font-bold">Consultas Médicas</h1>
         <p className="mt-1 text-sm text-green-100">
           {isAdmin
             ? 'Cadastre profissionais, vincule pacientes e acompanhe os prontuários.'
@@ -310,10 +310,10 @@ export default function ConsultasPage() {
       {isAdmin && (
         <div className="flex gap-2">
           <button type="button" onClick={() => switchTab('prof')} className={tabClass(tab === 'prof')}>
-            👨‍⚕️ Profissionais
+            Profissionais
           </button>
           <button type="button" onClick={() => switchTab('records')} className={tabClass(tab === 'records')}>
-            📋 Prontuários
+            Prontuários
           </button>
         </div>
       )}
@@ -407,7 +407,7 @@ export default function ConsultasPage() {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-neutral-800">👨‍⚕️ Profissionais cadastrados</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Profissionais cadastrados</h2>
 
             {professionals.length === 0 ? (
               <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-500">
@@ -452,14 +452,14 @@ export default function ConsultasPage() {
                           onClick={() => handleEditPrice(p)}
                           className="rounded bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-800 transition hover:bg-neutral-200"
                         >
-                          💲 Valor
+                          Valor
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAccess(p)}
                           className="rounded bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-800 transition hover:bg-neutral-200"
                         >
-                          🔑 {p.user ? 'Redefinir senha' : 'Criar acesso'}
+                          {p.user ? 'Redefinir senha' : 'Criar acesso'}
                         </button>
                         <button
                           type="button"
@@ -552,7 +552,7 @@ export default function ConsultasPage() {
       {tab === 'records' && (
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="h-fit space-y-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-neutral-800">📝 Novo registro</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Novo registro</h2>
 
             <div>
               <label className={labelClass}>Paciente *</label>
@@ -628,7 +628,7 @@ export default function ConsultasPage() {
           </div>
 
           <div className="space-y-4 lg:col-span-2">
-            <h2 className="text-lg font-bold text-neutral-800">📋 Histórico do paciente</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Histórico do paciente</h2>
 
             {!patientId ? (
               <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-500">

@@ -78,7 +78,7 @@ export default function HomeCareFinance() {
   return (
     <div className="space-y-6">
       <div className="bg-green-800 text-white p-5 rounded-2xl border-l-8 border-green-500 shadow-md">
-        <h2 className="text-xl font-bold">🏠 Home Care</h2>
+        <h2 className="text-xl font-bold">Home Care</h2>
         <p className="text-green-100 text-sm mt-1">
           {data.ordersCount} OS concluída(s). Resultado = receita − reembolsos (pendentes e pagos).
         </p>

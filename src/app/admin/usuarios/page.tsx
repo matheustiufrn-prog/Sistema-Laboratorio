@@ -158,12 +158,12 @@ export default function UsersAdminPage() {
         {/* Tabela de Listagem */}
         <div className="md:col-span-2 bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-neutral-800">👥 Utilizadores Cadastrados</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Utilizadores Cadastrados</h2>
             <button 
               onClick={fetchUsers}
               className="text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold px-3 py-1.5 rounded transition"
             >
-              🔄 Atualizar Lista
+              Atualizar Lista
             </button>
           </div>
 

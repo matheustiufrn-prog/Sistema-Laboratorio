@@ -252,7 +252,7 @@ export default function HomeCarePage() {
   return (
     <div className="p-8 space-y-8 font-sans max-w-7xl mx-auto">
       <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
-        <h1 className="text-2xl font-bold">🏠 Home Care</h1>
+        <h1 className="text-2xl font-bold">Home Care</h1>
         <p className="text-green-100 text-sm mt-1">
           Ordens de serviço de coleta domiciliar, com taxa de coleta, deslocamento e reembolsos.
         </p>
@@ -425,7 +425,7 @@ export default function HomeCarePage() {
         </div>
 
         <div className="xl:col-span-2 space-y-4">
-          <h2 className="text-lg font-bold text-neutral-800">📋 OS de Home Care</h2>
+          <h2 className="text-lg font-bold text-neutral-800">OS de Home Care</h2>
 
           {loading ? (
             <p className="text-neutral-500 text-sm">Carregando...</p>
@@ -478,7 +478,7 @@ export default function HomeCarePage() {
                         rel="noopener noreferrer"
                         className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-3 py-1 rounded text-xs transition"
                       >
-                        🖨️ Orçamento
+                        Orçamento
                       </a>
 
                       {!done && (
@@ -501,7 +501,7 @@ export default function HomeCarePage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs">
-                    <span className="font-semibold text-neutral-600">📅 Data da coleta:</span>
+                    <span className="font-semibold text-neutral-600">Data da coleta:</span>
                     <input
                       type="date"
                       value={shownDate}

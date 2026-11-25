@@ -123,7 +123,7 @@ export default function ExamsPage() {
 
       <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
         <h2 className="text-lg font-bold mb-4 text-neutral-800">
-          {editingId ? '✏️ Editar Exame' : '➕ Novo Exame'}
+          {editingId ? '✏Editar Exame' : '➕ Novo Exame'}
         </h2>
         <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

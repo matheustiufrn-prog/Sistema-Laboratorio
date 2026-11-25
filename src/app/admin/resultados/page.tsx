@@ -139,7 +139,7 @@ export default function ResultadosPage() {
   return (
     <div className="p-8 space-y-8 font-sans max-w-6xl mx-auto">
       <div className="bg-green-800 text-white p-6 rounded-2xl border-l-8 border-green-500 shadow-md">
-        <h1 className="text-2xl font-bold">📄 Resultados de Exames</h1>
+        <h1 className="text-2xl font-bold">Resultados de Exames</h1>
         <p className="text-green-100 text-sm mt-1">
           Anexe o PDF do resultado. O paciente com acesso ao portal consegue visualizar e baixar.
         </p>
@@ -216,7 +216,7 @@ export default function ResultadosPage() {
 
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-neutral-800">📋 Resultados anexados</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Resultados anexados</h2>
             <select
               value={filterPatient}
               onChange={(e) => handleFilter(e.target.value)}
@@ -266,13 +266,13 @@ export default function ResultadosPage() {
                             rel="noopener noreferrer"
                             className="rounded bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-800 transition hover:bg-neutral-200"
                           >
-                            👁️ Ver
+                            Ver
                           </a>
                           <a
                             href={`/api/results/${r.id}`}
                             className="rounded bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-700"
                           >
-                            ⬇️ Baixar
+                            Baixar
                           </a>
                           <button
                             type="button"

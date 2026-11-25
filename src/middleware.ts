@@ -18,8 +18,6 @@ const ADMIN_ONLY_API = [
   '/api/medical-records',
   '/api/revenues',
   '/api/partners',
-  '/api/revenues',
-  '/api/partners',
 ]
 
 const ADMIN_ONLY_PAGES = [
@@ -66,13 +64,11 @@ export async function middleware(req: NextRequest) {
     return redirectTo(req, portal ? '/paciente/login' : '/admin/login')
   }
 
-  // Paciente: só enxerga o portal dele
   if (session.role === 'PATIENT') {
     if (portal) return NextResponse.next()
     return isApi ? deny() : redirectTo(req, '/paciente')
   }
 
-  // Médico: só a aba de consultas e a API de prontuários
   if (session.role === 'DOCTOR') {
     if (isApi) {
       return pathname.startsWith('/api/medical-records') ? NextResponse.next() : deny()
@@ -83,7 +79,6 @@ export async function middleware(req: NextRequest) {
 
   const isAdmin = session.role === 'ADMIN'
 
-  // Equipe: não usa o portal do paciente
   if (portal) {
     return isApi ? deny() : redirectTo(req, isAdmin ? '/admin' : '/admin/pacientes')
   }

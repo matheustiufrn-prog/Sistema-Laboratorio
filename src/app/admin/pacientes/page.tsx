@@ -244,7 +244,7 @@ export default function PacientesPage() {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-neutral-800">📋 Pacientes Cadastrados</h2>
+        <h2 className="text-lg font-bold text-neutral-800">Pacientes Cadastrados</h2>
 
         {loading ? (
           <p className="text-sm text-neutral-500">Carregando pacientes...</p>
@@ -284,7 +284,7 @@ export default function PacientesPage() {
                         href={`/admin/resultados?patientId=${p.id}`}
                         className="text-xs font-bold text-green-700 hover:underline"
                       >
-                        📄 {p._count?.results ?? 0} resultado(s)
+                        {p._count?.results ?? 0} resultado(s)
                       </a>
                     </td>
                     <td className="p-3 text-right">
@@ -294,7 +294,7 @@ export default function PacientesPage() {
                           onClick={() => handleResetPassword(p)}
                           className="rounded bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-800 transition hover:bg-neutral-200"
                         >
-                          🔑 {p.user ? 'Redefinir senha' : 'Criar acesso'}
+                          {p.user ? 'Redefinir senha' : 'Criar acesso'}
                         </button>
                         {isAdmin && (
                           <button

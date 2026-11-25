@@ -81,7 +81,7 @@ export default function PacientePortalPage() {
             onClick={handleLogout}
             className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
           >
-            🚪 Sair
+            Sair
           </button>
         </div>
       </header>
@@ -110,7 +110,7 @@ export default function PacientePortalPage() {
                 className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm"
               >
                 <div className="min-w-0">
-                  <p className="font-bold text-neutral-900">📄 {r.title}</p>
+                  <p className="font-bold text-neutral-900">{r.title}</p>
                   <p className="text-xs text-neutral-500">
                     Disponível em {new Date(r.createdAt).toLocaleDateString('pt-BR')} · {formatSize(r.fileSize)}
                   </p>
@@ -124,13 +124,13 @@ export default function PacientePortalPage() {
                     rel="noopener noreferrer"
                     className="rounded-lg bg-neutral-100 px-4 py-2 text-sm font-bold text-neutral-800 transition hover:bg-neutral-200"
                   >
-                    👁️ Visualizar
+                    Visualizar
                   </a>
                   <a
                     href={`/api/paciente/results/${r.id}`}
                     className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-700"
                   >
-                    ⬇️ Baixar PDF
+                    Baixar PDF
                   </a>
                 </div>
               </div>

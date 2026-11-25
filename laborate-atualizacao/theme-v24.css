@@ -1,0 +1,187 @@
+
+/* ===== Temas V24 (verde, coral e escuro) ===== */
+
+/* Elevação suave nos cartões de destaque */
+.glass-theme .lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.glass-theme .lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 44px rgba(15, 80, 50, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- Coral (Glassy Dashboard V24) ---------- */
+.glass-theme.theme-coral {
+  --color-green-50: #fff3ef;
+  --color-green-100: #ffe3db;
+  --color-green-200: #ffc7b9;
+  --color-green-300: #ffa391;
+  --color-green-400: #f77e68;
+  --color-green-500: #f0664b;
+  --color-green-600: #e8603c;
+  --color-green-700: #c9472a;
+  --color-green-800: #9b3320;
+  --color-green-900: #7a281a;
+  background-color: #f8ece6;
+  background-image:
+    radial-gradient(60rem 40rem at 5% -10%, rgba(244, 114, 94, 0.34), transparent 60%),
+    radial-gradient(50rem 36rem at 100% 5%, rgba(251, 191, 143, 0.4), transparent 60%),
+    radial-gradient(46rem 34rem at 55% 115%, rgba(236, 130, 160, 0.28), transparent 60%),
+    linear-gradient(180deg, #fbf1ec 0%, #f6e6df 100%);
+}
+.glass-theme.theme-coral .bg-green-50 { background-color: rgba(255, 227, 219, 0.65); }
+.glass-theme.theme-coral .border-green-200 { border-color: rgba(255, 170, 150, 0.55); }
+.glass-theme.theme-coral .shadow-sm,
+.glass-theme.theme-coral .shadow-md,
+.glass-theme.theme-coral .shadow-lg {
+  box-shadow: 0 8px 32px rgba(120, 50, 30, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.glass-theme.theme-coral .lift:hover {
+  box-shadow: 0 16px 44px rgba(120, 50, 30, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.glass-theme.theme-coral [class*="hover:bg-green-50"]:hover { background-color: rgba(255, 227, 219, 0.8); }
+
+/* ---------- Escuro (violeta, estilo Ember) ---------- */
+.glass-theme.theme-dark {
+  color-scheme: dark;
+  color: #e6e6ee;
+
+  --color-neutral-50: rgba(255, 255, 255, 0.04);
+  --color-neutral-100: rgba(255, 255, 255, 0.07);
+  --color-neutral-200: rgba(255, 255, 255, 0.1);
+  --color-neutral-300: rgba(255, 255, 255, 0.16);
+  --color-neutral-400: #7c7c8a;
+  --color-neutral-500: #a1a1b0;
+  --color-neutral-600: #b6b6c4;
+  --color-neutral-700: #d0d0dc;
+  --color-neutral-800: #e6e6ee;
+  --color-neutral-900: #f7f7fb;
+
+  --color-green-50: rgba(124, 92, 255, 0.14);
+  --color-green-100: rgba(124, 92, 255, 0.22);
+  --color-green-200: rgba(124, 92, 255, 0.4);
+  --color-green-300: #5b47c9;
+  --color-green-400: #7c66f0;
+  --color-green-500: #8b74ff;
+  --color-green-600: #7c5cff;
+  --color-green-700: #6a49f0;
+  --color-green-800: #2b2170;
+  --color-green-900: #1f1856;
+
+  --color-red-50: rgba(239, 68, 68, 0.12);
+  --color-red-100: rgba(239, 68, 68, 0.2);
+  --color-red-200: rgba(239, 68, 68, 0.35);
+  --color-red-300: rgba(239, 68, 68, 0.5);
+  --color-yellow-50: rgba(234, 179, 8, 0.12);
+  --color-yellow-200: rgba(234, 179, 8, 0.35);
+  --color-blue-50: rgba(59, 130, 246, 0.14);
+  --color-blue-200: rgba(59, 130, 246, 0.35);
+  --color-blue-300: rgba(59, 130, 246, 0.5);
+  --color-amber-50: rgba(245, 158, 11, 0.12);
+  --color-amber-200: rgba(245, 158, 11, 0.35);
+  --color-amber-300: rgba(245, 158, 11, 0.5);
+
+  background-color: #0b0916;
+  background-image:
+    radial-gradient(55rem 38rem at 8% -10%, rgba(124, 92, 255, 0.4), transparent 60%),
+    radial-gradient(48rem 34rem at 100% 0%, rgba(236, 72, 153, 0.2), transparent 60%),
+    radial-gradient(46rem 34rem at 60% 115%, rgba(56, 189, 248, 0.16), transparent 60%),
+    linear-gradient(180deg, #0d0a1c 0%, #08060f 100%);
+}
+
+.glass-theme.theme-dark .bg-white {
+  background-color: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+.glass-theme.theme-dark input.bg-white,
+.glass-theme.theme-dark select.bg-white,
+.glass-theme.theme-dark textarea.bg-white,
+.glass-theme.theme-dark button.bg-white {
+  background-color: rgba(255, 255, 255, 0.07);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.glass-theme.theme-dark .bg-neutral-50 { background-color: rgba(255, 255, 255, 0.04); }
+.glass-theme.theme-dark .bg-neutral-100 { background-color: rgba(255, 255, 255, 0.07); }
+.glass-theme.theme-dark .bg-green-50 { background-color: rgba(124, 92, 255, 0.14); }
+.glass-theme.theme-dark .border-neutral-200 { border-color: rgba(255, 255, 255, 0.1); }
+.glass-theme.theme-dark .border-green-200 { border-color: rgba(124, 92, 255, 0.4); }
+.glass-theme.theme-dark .shadow-sm,
+.glass-theme.theme-dark .shadow-md,
+.glass-theme.theme-dark .shadow-lg {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.glass-theme.theme-dark .lift:hover {
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.glass-theme.theme-dark [class*="hover:bg-neutral-50"]:hover { background-color: rgba(255, 255, 255, 0.06); }
+.glass-theme.theme-dark [class*="hover:bg-neutral-100"]:hover { background-color: rgba(255, 255, 255, 0.1); }
+.glass-theme.theme-dark [class*="hover:bg-green-50"]:hover { background-color: rgba(124, 92, 255, 0.22); }
+
+.glass-theme.theme-dark .text-black { color: #f1f1f7; }
+.glass-theme.theme-dark .text-green-100 { color: #e9e5ff; }
+.glass-theme.theme-dark .text-green-600,
+.glass-theme.theme-dark .text-green-700 { color: #b3a6ff; }
+.glass-theme.theme-dark .text-green-800,
+.glass-theme.theme-dark .text-green-900 { color: #d9d2ff; }
+.glass-theme.theme-dark .text-red-600,
+.glass-theme.theme-dark .text-red-700,
+.glass-theme.theme-dark .text-red-800 { color: #f87171; }
+.glass-theme.theme-dark .text-yellow-700,
+.glass-theme.theme-dark .text-yellow-800 { color: #fde047; }
+.glass-theme.theme-dark .text-blue-600,
+.glass-theme.theme-dark .text-blue-700,
+.glass-theme.theme-dark .text-blue-800 { color: #93c5fd; }
+.glass-theme.theme-dark .text-amber-700 { color: #fcd34d; }
+.glass-theme.theme-dark ::placeholder { color: rgba(255, 255, 255, 0.35); }
+
+/* ---------- Impressão: sempre em fundo branco e texto escuro ---------- */
+@media print {
+  .glass-theme.theme-dark,
+  .glass-theme.theme-coral {
+    --color-neutral-50: #fafafa;
+    --color-neutral-100: #f5f5f5;
+    --color-neutral-200: #e5e5e5;
+    --color-neutral-300: #d4d4d4;
+    --color-neutral-400: #a3a3a3;
+    --color-neutral-500: #737373;
+    --color-neutral-600: #525252;
+    --color-neutral-700: #404040;
+    --color-neutral-800: #262626;
+    --color-neutral-900: #171717;
+    --color-red-50: #fef2f2;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-yellow-50: #fefce8;
+    --color-yellow-200: #fef08a;
+    --color-blue-50: #eff6ff;
+    --color-blue-200: #bfdbfe;
+    --color-amber-50: #fffbeb;
+    --color-amber-200: #fde68a;
+    --color-green-50: #f0fdf4;
+    --color-green-100: #dcfce7;
+    --color-green-200: #bbf7d0;
+    --color-green-300: #86efac;
+    --color-green-400: #4ade80;
+    --color-green-500: #22c55e;
+    --color-green-600: #16a34a;
+    --color-green-700: #15803d;
+    --color-green-800: #166534;
+    --color-green-900: #14532d;
+    color: #171717;
+  }
+  .glass-theme .text-green-600,
+  .glass-theme .text-green-700 { color: #15803d !important; }
+  .glass-theme .text-green-800,
+  .glass-theme .text-green-900 { color: #166534 !important; }
+  .glass-theme .bg-green-50 { background-color: #f0fdf4 !important; }
+  .glass-theme .border-green-200 { border-color: #bbf7d0 !important; }
+  .glass-theme .text-black { color: #000 !important; }
+  .glass-theme .text-red-600,
+  .glass-theme .text-red-700 { color: #dc2626 !important; }
+  .glass-theme .text-yellow-700,
+  .glass-theme .text-yellow-800 { color: #a16207 !important; }
+  .glass-theme .text-blue-700 { color: #1d4ed8 !important; }
+  .glass-theme .text-amber-700 { color: #b45309 !important; }
+}

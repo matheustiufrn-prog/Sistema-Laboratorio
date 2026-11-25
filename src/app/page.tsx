@@ -294,10 +294,10 @@ export default function AdminDashboardPage() {
   ]
 
   const streams = [
-    { label: '🔬 Exames (laboratório)', value: s?.examsRevenue, note: `${s?.labOrders ?? 0} OS concluídas` },
-    { label: '🩺 Consultas médicas', value: s?.consultationsRevenue, note: `${s?.consultations ?? 0} consulta(s)` },
-    { label: '🏠 Home Care', value: s?.homeCareRevenue, note: `${s?.homeCareOrders ?? 0} OS concluídas` },
-    { label: '✍️ Receitas lançadas', value: s?.manualRevenue, note: `${revenues.length} lançamento(s)` },
+    { label: 'Exames (laboratório)', value: s?.examsRevenue, note: `${s?.labOrders ?? 0} OS concluídas` },
+    { label: 'Consultas médicas', value: s?.consultationsRevenue, note: `${s?.consultations ?? 0} consulta(s)` },
+    { label: 'Home Care', value: s?.homeCareRevenue, note: `${s?.homeCareOrders ?? 0} OS concluídas` },
+    { label: '✍Receitas lançadas', value: s?.manualRevenue, note: `${revenues.length} lançamento(s)` },
   ]
 
   const baseResult =
@@ -323,7 +323,7 @@ export default function AdminDashboardPage() {
           href="/admin/relatorios"
           className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-800 shadow-sm transition hover:bg-green-50"
         >
-          🗓️ Relatório mensal
+          Relatório mensal
         </a>
       </div>
 
@@ -354,7 +354,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className={`${cardClass} lg:col-span-2`}>
-          <h2 className="text-lg font-bold text-neutral-800">📅 Desempenho mês a mês</h2>
+          <h2 className="text-lg font-bold text-neutral-800">Desempenho mês a mês</h2>
 
           {loading ? (
             <p className="text-sm text-neutral-500">Carregando...</p>
@@ -401,7 +401,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className={cardClass}>
-          <h2 className="text-lg font-bold text-neutral-800">💸 Registrar nova despesa</h2>
+          <h2 className="text-lg font-bold text-neutral-800">Registrar nova despesa</h2>
 
           <form onSubmit={handleAddExpense} className="space-y-3">
             <div>
@@ -498,7 +498,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className={cardClass}>
-          <h2 className="text-lg font-bold text-neutral-800">✍️ Lançar receita do mês</h2>
+          <h2 className="text-lg font-bold text-neutral-800">✍Lançar receita do mês</h2>
           <p className="text-xs text-neutral-500">
             Use para receitas que não estão nas OS do sistema. O valor conta no mês de referência escolhido.
           </p>
@@ -583,7 +583,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className={cardClass}>
-          <h2 className="text-lg font-bold text-neutral-800">🤝 Rateio entre sócios</h2>
+          <h2 className="text-lg font-bold text-neutral-800">Rateio entre sócios</h2>
           <p className="text-xs text-neutral-500">
             Divide o resultado líquido entre os sócios, conforme a porcentagem de cada um.
           </p>
@@ -704,7 +704,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className={cardClass}>
-        <h2 className="text-lg font-bold text-neutral-800">🧾 Últimos atendimentos concluídos</h2>
+        <h2 className="text-lg font-bold text-neutral-800">Últimos atendimentos concluídos</h2>
         <p className="text-xs text-neutral-500">
           Altere a data de um atendimento para ele passar a contar no mês correto. Mostrando os 40 mais recentes.
         </p>
@@ -733,7 +733,7 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="p-3">
                       <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-bold text-green-700">
-                        {r.kind === 'HOMECARE' ? '🏠 Home Care' : 'Laboratório'}
+                        {r.kind === 'HOMECARE' ? 'Home Care' : 'Laboratório'}
                       </span>
                     </td>
                     <td className="p-3 font-semibold text-black">{r.patient}</td>

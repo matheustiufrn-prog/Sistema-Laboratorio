@@ -135,7 +135,7 @@ export default function PatientsContent() {
       <div className="bg-white p-6 rounded-xl shadow-sm border border-neutral-200">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-black">
-            {editingId ? '✏️ Editar Cadastro de Paciente' : '👤 Novo Cadastro'}
+            {editingId ? '✏Editar Cadastro de Paciente' : 'Novo Cadastro'}
           </h2>
           {editingId && (
             <button
@@ -252,7 +252,7 @@ export default function PatientsContent() {
 
       {/* Tabela de Pacientes Cadastrados com Ações */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-neutral-200">
-        <h2 className="text-xl font-bold text-black mb-4">📋 Pacientes Cadastrados</h2>
+        <h2 className="text-xl font-bold text-black mb-4">Pacientes Cadastrados</h2>
 
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
           <table className="w-full text-left border-collapse">
